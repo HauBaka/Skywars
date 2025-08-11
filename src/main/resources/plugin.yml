@@ -1,0 +1,8 @@
+name: Skywars
+main: com.HauBaka.Skywars
+version: 'test'
+description: This is for study purposes only, not for commercial use.
+author: HauBaka
+website: haubaka.xyz
+depend:
+  - SlimeWorldManager
