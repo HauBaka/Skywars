@@ -1,0 +1,12 @@
+unit:
+  hours: "hours"
+  minutes: "minutes"
+  seconds: "seconds"
+  hour: "hour"
+  minute: "minute"
+  second: "second"
+
+arena:
+  start-countdown: "&a&lSTARTING! &eThis game starts in %time%&e second!"
+  countdown-seconds: "&eThe game starts in %time%&e seconds!"
+  countdown-second: "&eThe game starts in %time%&e second!"

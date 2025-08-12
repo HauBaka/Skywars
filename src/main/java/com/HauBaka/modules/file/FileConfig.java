@@ -10,7 +10,6 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 
 import lombok.Getter;
 import org.bukkit.ChatColor;
@@ -32,8 +31,6 @@ public class FileConfig {
         if (file == null) throw new NullPointerException();
         this.file = new File(file.toString() + File.separatorChar + this.filename);
     }
-
-
     /**
      * Reloads the configuration file from disk and applies defaults from the plugin's resources.
      */
@@ -49,7 +46,6 @@ public class FileConfig {
             this.fileConfiguration.setDefaults((Configuration)yamlConfiguration);
         }
     }
-
     /**
      * Gets the current loaded configuration.
      */
@@ -58,7 +54,6 @@ public class FileConfig {
             reloadConfig();
         return this.fileConfiguration;
     }
-
     /**
      * Saves the current configuration to disk.
      */
@@ -71,7 +66,6 @@ public class FileConfig {
             Skywars.getLogger().warn("Could not save config to {}", this.fileConfiguration, iOException);
         }
     }
-
     /**
      * Saves the default configuration file from the plugin's resources to the data folder,
      * if it does not already exist.
@@ -83,8 +77,6 @@ public class FileConfig {
         if (!this.file.exists())
             this.skywars.saveResource(this.filename, false);
     }
-
-
     /**
      * Adds a default value to the configuration if the key does not already exist.
      * <p>
@@ -101,7 +93,6 @@ public class FileConfig {
         if (!this.fileConfiguration.contains(paramString))
             this.fileConfiguration.set(paramString, paramObject);
     }
-
     /**
      * Updates the configuration by adding any missing keys from the default resource file.
      * <p>
