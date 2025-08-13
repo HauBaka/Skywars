@@ -1,11 +1,19 @@
 package com.HauBaka.modules.arena;
 
+import com.HauBaka.modules.Utils;
 import com.HauBaka.modules.arena.enums.ArenaState;
+import com.HauBaka.modules.arena.object.ArenaChest;
+import com.HauBaka.modules.arena.object.ChestItem;
 import com.HauBaka.modules.player.GamePlayer;
 import lombok.Getter;
 import org.bukkit.Location;
+import org.bukkit.block.Chest;
+import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
 public class ArenaTeam {
     @Getter
@@ -45,4 +53,12 @@ public class ArenaTeam {
     public int size() {
         return members.size();
     }
+
+    public void refill() {
+        for (ArenaChest chest : spawnChests) {
+            chest.refill();
+        }
+    }
+
+
 }

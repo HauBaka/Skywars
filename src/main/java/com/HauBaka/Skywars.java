@@ -15,7 +15,6 @@ public class Skywars extends JavaPlugin {
     private static final Logger logger = LogManager.getLogger("Skywars");
     @Getter
     private FileConfig messageConfig;
-
     @Getter
     private static Skywars instance;
 

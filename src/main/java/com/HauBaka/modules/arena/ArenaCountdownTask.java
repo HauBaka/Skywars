@@ -53,14 +53,18 @@ public class ArenaCountdownTask {
                 }, 0L, 20L);
     }
     public void phase_1() {
+        arena.refill();
 
     }
     public void phase_2() {
+        arena.refill();
     }
     public void phase_3() {
+        arena.refill();
     }
 
     public void doom() {
+        arena.refill();
     }
 
     public void ending() {

@@ -7,7 +7,12 @@ public class ArenaVariant {
         SOLO(12,1, 2), DOUBLES(24,2, 2), MEGA(100,5, 2);
 
         @Getter
-        int amountPlayer, playerPerTeam, minPlayer;
+        final
+        int amountPlayer;
+        @Getter
+        final int playerPerTeam;
+        @Getter
+        int minPlayer;
         Mode(int amountPlayer, int playerPerTeam, int minPlayer) {
             this.amountPlayer = amountPlayer;
             this.playerPerTeam = playerPerTeam;
@@ -18,9 +23,9 @@ public class ArenaVariant {
         INSANE
     }
     @Getter
-    private Mode mode;
+    private final Mode mode;
     @Getter
-    private Type type;
+    private final Type type;
 
     ArenaVariant(Mode mode, Type type) {
         this.mode = mode;

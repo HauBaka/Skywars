@@ -3,6 +3,7 @@ package com.HauBaka.modules.arena;
 
 import com.HauBaka.modules.Utils;
 import com.HauBaka.modules.arena.enums.ArenaVariant;
+import com.HauBaka.modules.arena.object.ArenaChest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +14,9 @@ public class ArenaManager {
 
     public static void init() {
         arenaList = new HashMap<>();
+        ArenaChest.init();
     }
+
     public static Arena createArena(TemplateArena templateArena, ArenaVariant variant) {
         Arena arena = new Arena(templateArena, variant);
         arenaList.put(arena.getId(), arena);

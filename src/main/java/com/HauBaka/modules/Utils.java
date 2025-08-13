@@ -15,6 +15,7 @@ public class Utils {
      * @return any number in [a,b]
      */
     public static  int randomInRange(int a, int b) {
+        if (a>b) return randomInRange(b, a);
         Random rand = new Random();
         return rand.nextInt(b - a + 1) + a;
     }

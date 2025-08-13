@@ -1,0 +1,60 @@
+phase_1:
+  insane:
+    spawns:
+      - item: IRON_HELMET
+        chance: 55
+    mid:
+      - item: IRON_HELMET
+        chance: 55
+  normal:
+    spawns:
+      - item: IRON_HELMET
+        chance: 55
+        mid:
+      - item: IRON_HELMET
+        chance: 55
+phase_2:
+  insane:
+    spawns:
+      - item: IRON_HELMET
+        chance: 55
+    mid:
+      - item: IRON_HELMET
+        chance: 55
+  normal:
+    spawns:
+      - item: IRON_HELMET
+        chance: 55
+        mid:
+      - item: IRON_HELMET
+        chance: 55
+phase_3:
+  insane:
+    spawns:
+      - item: IRON_HELMET
+        chance: 55
+    mid:
+      - item: IRON_HELMET
+        chance: 55
+  normal:
+    spawns:
+      - item: IRON_HELMET
+        chance: 55
+        mid:
+      - item: IRON_HELMET
+        chance: 55
+doom:
+  insane:
+    spawns:
+      - item: IRON_HELMET
+        chance: 55
+    mid:
+      - item: IRON_HELMET
+        chance: 55
+  normal:
+    spawns:
+      - item: IRON_HELMET
+        chance: 55
+        mid:
+      - item: IRON_HELMET
+        chance: 55

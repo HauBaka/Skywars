@@ -1,6 +1,7 @@
 package com.HauBaka.modules.arena;
 
 import com.HauBaka.modules.Utils;
+import com.HauBaka.modules.arena.object.ArenaChest;
 import com.HauBaka.modules.file.FileConfig;
 import lombok.Getter;
 import org.bukkit.Location;

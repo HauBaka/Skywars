@@ -1,6 +1,7 @@
 package com.HauBaka.modules.arena;
 
 import com.HauBaka.modules.arena.enums.*;
+import com.HauBaka.modules.arena.object.ArenaChest;
 import com.HauBaka.modules.event.ArenaStageChangeEvent;
 import com.HauBaka.modules.player.GamePlayer;
 import com.HauBaka.modules.world.WorldManager;
@@ -88,7 +89,10 @@ public class Arena {
             countDownTask.ending();
         }
     }
+    public void refill() {
+        for (ArenaTeam team : teams) team.refill();
 
+    }
     public void broadcast(String s) {
         for (GamePlayer gamePlayer : players) {
             gamePlayer.getPlayer().sendMessage(s);
