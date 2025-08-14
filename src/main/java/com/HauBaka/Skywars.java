@@ -1,8 +1,8 @@
 package com.HauBaka;
 
 import co.aikar.commands.PaperCommandManager;
-import com.HauBaka.modules.command.testCommand;
-import com.HauBaka.modules.file.FileConfig;
+import com.HauBaka.command.testCommand;
+import com.HauBaka.file.FileConfig;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

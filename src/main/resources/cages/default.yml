@@ -1,0 +1,11 @@
+name: "Default"
+rarity: "COMMON"
+blocks:
+  - type: CUBE
+    from: [-2,0,-2]
+    to: [2,3,2]
+    material: GLASS
+  - x: 0
+    y: 0
+    z: 0
+    material: REDSTONE_BLOCK
