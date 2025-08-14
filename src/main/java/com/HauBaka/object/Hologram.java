@@ -38,6 +38,16 @@ public class Hologram {
         double yOffset = -armorStands.size() * 0.25;
         spawnLine(baseLocation.clone().add(0, yOffset, 0), ChatColor.translateAlternateColorCodes('&', text));
     }
+    public void setLine(int index, String text) {
+        if (index < 0 || index >= armorStands.size()) {
+            throw new IndexOutOfBoundsException("Invalid line index: " + index);
+        }
+
+        ArmorStand as = armorStands.get(index);
+        if (as != null && !as.isDead()) {
+            as.setCustomName(ChatColor.translateAlternateColorCodes('&', text));
+        }
+    }
 
     public void clearLines() {
         destroy();

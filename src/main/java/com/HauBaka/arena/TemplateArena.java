@@ -23,6 +23,13 @@ public class TemplateArena {
             this.Yaw=  Yaw;
             this.Pitch = Pitch;
         }
+        public TemplateLocation(Location location) {
+            this.X = location.getX();
+            this.Y = location.getY();
+            this.Z = location.getZ();
+            this.Yaw = location.getYaw();
+            this.Pitch = location.getPitch();
+        }
     }
     @Getter
     private final String mapName;

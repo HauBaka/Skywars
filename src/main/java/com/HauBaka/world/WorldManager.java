@@ -1,6 +1,7 @@
 package com.HauBaka.world;
 
 import com.HauBaka.Skywars;
+import com.HauBaka.utils.Utils;
 import com.grinderwolf.swm.api.SlimePlugin;
 import com.grinderwolf.swm.api.loaders.SlimeLoader;
 import com.grinderwolf.swm.api.world.SlimeWorld;
@@ -71,7 +72,12 @@ public class WorldManager  {
             }
         });
     }
-
+    public static String cloneWorld(String sourceWorldName, Consumer<World> callback) {
+        String worldID = Utils.generateID(5);
+        while (createdWorlds.contains(worldID)) worldID=Utils.generateID(5);
+        cloneWorld(sourceWorldName, worldID, callback);
+        return worldID;
+    }
     /*
     public World cloneWorld(String sourceWorldName) {
         String newWorldName = ArenaManager.generateID();

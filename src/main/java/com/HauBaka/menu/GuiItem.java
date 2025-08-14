@@ -9,7 +9,7 @@ public class GuiItem {
     @Getter
     private final ItemStack item;
     private final Consumer<Object> consumer;
-    GuiItem(ItemStack item, Consumer<Object> consumer) {
+    public GuiItem(ItemStack item, Consumer<Object> consumer) {
         this.item = item;
         this.consumer = consumer;
     }

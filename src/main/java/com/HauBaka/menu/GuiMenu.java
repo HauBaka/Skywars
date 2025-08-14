@@ -37,7 +37,7 @@ public class GuiMenu implements Listener {
         Bukkit.getPluginManager().registerEvents(this, Skywars.getInstance());
     }
 
-    public void addItem(int slot, GuiItem item) {
+    public void setItem(int slot, GuiItem item) {
         this.itemSlots.put(slot, item);
         this.inventory.setItem(slot, item.getItem());
         gamePlayer.getPlayer().updateInventory();

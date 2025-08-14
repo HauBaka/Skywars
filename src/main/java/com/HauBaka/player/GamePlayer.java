@@ -7,11 +7,13 @@ import org.bukkit.entity.Player;
 import java.util.Map;
 
 public class GamePlayer {
-    @Getter
     private static Map<Player, GamePlayer> gamePlayers;
     @Getter
     private Player player;
     @Getter
     private GameScoreboard scoreboard;
 
+    public static GamePlayer getGamePlayer(Player player) {
+        return gamePlayers.getOrDefault(player, null);
+    }
 }
