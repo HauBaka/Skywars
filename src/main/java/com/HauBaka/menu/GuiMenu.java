@@ -54,7 +54,6 @@ public class GuiMenu implements Listener {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         if (!event.getWhoClicked().equals(gamePlayer.getPlayer())) return;
-
         event.setCancelled(true);
         execute(event.getSlot());
     }

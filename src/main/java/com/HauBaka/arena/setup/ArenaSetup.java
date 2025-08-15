@@ -1,7 +1,9 @@
 package com.HauBaka.arena.setup;
 
+import com.HauBaka.Skywars;
 import com.HauBaka.arena.TemplateArena;
 import com.HauBaka.enums.ArenaSetupStage;
+import com.HauBaka.file.FileConfig;
 import com.HauBaka.menu.GuiItem;
 import com.HauBaka.menu.GuiMenu;
 import com.HauBaka.object.Hologram;
@@ -11,15 +13,15 @@ import com.HauBaka.utils.Utils;
 import com.HauBaka.world.WorldManager;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.World;
+import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
@@ -54,7 +56,7 @@ public class ArenaSetup {
     }
 
     private static class TemplateBlock implements Listener {
-        private static Map<World, List<TemplateBlock>> listBlocks;
+        private static final Map<World, List<TemplateBlock>> listBlocks = new HashMap<>();
         @Getter
         private final int x;
         @Getter
@@ -62,13 +64,13 @@ public class ArenaSetup {
         @Getter
         private final int z;
         @Getter
-        private Hologram hologram;
+        private final Hologram hologram;
         Direction direction;
         @Getter
         private int teamNumber;
         @Setter
         private Consumer<BlockBreakEvent> consumer;
-        private Location loc;
+        private final Location loc;
         TemplateBlock(Location loc, int teamNumber) {
             this.x = loc.getBlockX();
             this.y = loc.getBlockY();
@@ -83,10 +85,15 @@ public class ArenaSetup {
             hologram.addLine("");
             hologram.addLine("&e&lRIGHT CLICK TO CHANGE!");
 
-            if (!listBlocks.containsKey(loc.getWorld())) listBlocks.put(loc.getWorld(), Arrays.asList(this));
-            else listBlocks.get(loc.getWorld()).add(this);
-        }
+            if (!listBlocks.containsKey(loc.getWorld())) listBlocks.put(loc.getWorld(), new ArrayList<>());
+            listBlocks.get(loc.getWorld()).add(this);
 
+            Bukkit.getPluginManager().registerEvents(this, Skywars.getInstance());
+        }
+        private void addYaw() {
+            Direction newDirection = Direction.fromYaw(this.direction.getYaw() + (float) 90.0);
+            setDirection(newDirection);
+        }
         private void setDirection(Direction direction) {
             this.direction = direction;
             hologram.setLine(1, "&eDirection: &a" + direction.toString());
@@ -108,6 +115,7 @@ public class ArenaSetup {
         }
         private void destroy() {
             hologram.destroy();
+            HandlerList.unregisterAll(this);
         }
         private static void removeWorld(World world) {
             if (!listBlocks.containsKey(world)) return;
@@ -120,7 +128,8 @@ public class ArenaSetup {
     private static final int CHEST_PER_SPAWN = 3;
     @Getter
     private final GamePlayer editor;
-    private final String map;
+    @Getter
+    private final String mapName;
     @Getter
     private World world;
     @Getter
@@ -130,21 +139,34 @@ public class ArenaSetup {
     @Getter
     private final Map<Integer, List<TemplateArena.TemplateLocation>> spawnChests;
     @Getter
+    private final List<TemplateArena.TemplateLocation> midChests;
+    @Getter
     private Map<Integer, ItemStack> oldInventory;
-    public ArenaSetup(String map,  GamePlayer editor) {
-        this.map = map;
+    @Getter @Setter
+    private int currentSpawn;
+    public ArenaSetup(String mapName, GamePlayer editor) {
+        this.mapName = mapName.toLowerCase();
         this.editor = editor;
         this.spawns = new HashMap<>();
         this.spawnChests = new HashMap<>();
-        this.stage = ArenaSetupStage.SPAWN;
-        WorldManager.cloneWorld(this.map, w -> {
+        this.midChests = new ArrayList<>();
+        this.currentSpawn = 0;
+        WorldManager.cloneWorld(this.mapName, w -> {
             this.world = w;
             joinEdit();
         });
     }
     public void joinEdit() {
         editor.getPlayer().teleport(this.world.getSpawnLocation());
+        setStage(ArenaSetupStage.SPAWN);
+    }
+    public void setStage(ArenaSetupStage stage) {
+        this.stage = stage;
         setItems();
+    }
+
+    public void cancel() {
+
     }
 
     private void setItems() {
@@ -163,14 +185,16 @@ public class ArenaSetup {
 
         inventory.clear();
         inventory.setItem(0, teleportCompass.getItem());
-        inventory.setItem(2, spawnBeacon.getItem());
-        inventory.setItem(3,chestStick.getItem());
+
         inventory.setItem(8, cancelItem.getItem());
         switch (stage) {
             case SPAWN:
+                inventory.setItem(2, spawnBeacon.getItem());
+                inventory.setItem(3,chestStick.getItem());
                 inventory.setItem(5, nextStageItem.getItem());
                 break;
             case MID:
+                inventory.setItem(3, midChestStick.getItem());
                 inventory.setItem(5, previousStageItem.getItem());
                 inventory.setItem(7, saveItem.getItem());
                 break;
@@ -179,7 +203,7 @@ public class ArenaSetup {
 
     static final int[] invLocations = {10,11,12,13,14,15,16,19,20,21,22,23};
     public void openSpawnsMenu(TemplateBlock templateBlock) {
-        GuiMenu guiMenu = new GuiMenu(Utils.toBetterName(map) +"'s spawns", 36, editor);
+        GuiMenu guiMenu = new GuiMenu(Utils.toBetterName(mapName) +"'s spawns", 36, editor);
         for (int i = 0; i < MAX_SPAWNS; ++i) {
             int team = i+1;
             if (team != templateBlock.getTeamNumber()) {
@@ -187,9 +211,14 @@ public class ArenaSetup {
                         Utils.buildItem(
                                 new ItemStack(Material.WOOL, team, (byte) (spawns.get(team) == null ? 7 : 5)),
                                 "&aTeam " + team,
-                                Arrays.asList("&eClick to set current", "&elocation to &ateam " + team + "'s", "&espawn&e."),
-                                null),
-                        o -> {
+                                Arrays.asList(
+                                        "&eLeft click&7 to set current",
+                                        "&7location to &ateam " + team + "'s",
+                                        "&aspawn&7.",
+                                        "",
+                                        "&eRight click&7 to &arotate yaw."),
+                                null)
+                        ).setExecute(ClickType.LEFT,o -> {
                             spawns.put(team, templateBlock.toTemplateLocation());
                             spawnChests.put(team, spawnChests.getOrDefault(templateBlock.getTeamNumber(),new ArrayList<>()));
 
@@ -198,47 +227,60 @@ public class ArenaSetup {
 
                             templateBlock.setTeam(team);
 
-                            guiMenu.setItem(invLocations[team-1], new GuiItem(
-                                    Utils.buildItem(
-                                            new ItemStack(Material.WOOL, team, (byte) 14),
-                                            "&aTeam" + team,
-                                            Arrays.asList("&eThis is current location!"),
-                                            null
-                                    ),
-                                    o1 -> {
+                            guiMenu.setItem(
+                                    invLocations[team-1],
+                                    new GuiItem(
+                                            Utils.buildItem(
+                                                    new ItemStack(Material.WOOL, team, (byte) 14),
+                                                    "&aTeam" + team,
+                                                    Collections.singletonList("&eThis is current location!"),
+                                                    null
+                                            )
+                                    ).setExecute(ClickType.LEFT, o1 -> {
                                         editor.getPlayer().sendMessage("&4&lERROR &cTeam " + team +"'s spawn is current location!");
                                         editor.getPlayer().playSound(editor.getPlayer().getLocation()
-                                        , Sound.ENDERMAN_HIT, 1f, 1f);
-                                    }
-                            ));
-                        }
-                ));
+                                                , Sound.ENDERMAN_HIT, 1f, 1f);
+                                    }).setExecute(ClickType.RIGHT, o1 -> {
+                                        templateBlock.addYaw();
+                                        editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ORB_PICKUP, 1f, 1f);
+                                    })
+
+                            );
+                        }).setExecute(ClickType.RIGHT, o1 -> {
+                            templateBlock.addYaw();
+                            editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ORB_PICKUP, 1f, 1f);
+                        })
+
+                );
             } else {
-                guiMenu.setItem(invLocations[team-1], new GuiItem(
-                        Utils.buildItem(
-                                new ItemStack(Material.WOOL, team, (byte) 14),
-                                "&aTeam" + team,
-                                Arrays.asList("&eThis is current location!"),
-                                null
-                        ),
-                        o -> {
+                guiMenu.setItem(
+                        invLocations[team-1],
+                        new GuiItem(
+                            Utils.buildItem(
+                                    new ItemStack(Material.WOOL, team, (byte) 14),
+                                    "&aTeam" + team,
+                                    Collections.singletonList("&eThis is current location!"),
+                                    null
+                            )
+                        ).setExecute(ClickType.LEFT, o-> {
                             editor.getPlayer().sendMessage("&4&lERROR &cTeam " + team +"'s spawn is current location!");
-                            editor.getPlayer().playSound(editor.getPlayer().getLocation()
-                                    , Sound.ENDERMAN_HIT, 1f, 1f);
-                        }
-                ));
+                            editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ENDERMAN_HIT, 1f, 1f);
+                        }).setExecute(ClickType.RIGHT, o1 -> {
+                            templateBlock.addYaw();
+                            editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ORB_PICKUP, 1f, 1f);
+                        })
+                );
             }
         }
         guiMenu.setItem(35,new GuiItem(
                 Utils.buildItem(
                         new ItemStack(Material.REDSTONE_BLOCK),
                         "&c&lREMOVE",
-                        Arrays.asList(
+                        Collections.singletonList(
                                 "&eRemove this spawn"
                         ),
                         null
-                ),
-                o -> {
+                )).setExecute(ClickType.LEFT, o -> {
                     spawns.remove(templateBlock.getTeamNumber());
                     spawnChests.remove(templateBlock.getTeamNumber());
                     editor.getPlayer().sendMessage("&6&lREMOVED!&r&e Team "+ templateBlock.getTeamNumber() +"'s spawn has been removed!");
@@ -264,7 +306,7 @@ public class ArenaSetup {
 
     private static final InteractiveItem spawnBeacon = new InteractiveItem(
             Utils.buildItem(Material.BEACON, "&a&lADD SPAWN",
-                    Arrays.asList("&7Place to add spawn location"),
+                    Collections.singletonList("&7Place to add spawn location"),
                     null
             )
     ).setInteract(Action.RIGHT_CLICK_BLOCK, event -> {
@@ -282,6 +324,7 @@ public class ArenaSetup {
         }
         for (int i = 1; i<=MAX_SPAWNS; ++i) {
             if (!arenaSetup.getSpawns().containsKey(i) || arenaSetup.getSpawns().get(i) == null) {
+                arenaSetup.setCurrentSpawn(i);
                 arenaSetup.getSpawns().put(i,templateLocation);
                 arenaSetup.getSpawnChests().put(i, new ArrayList<>());
                 arenaSetup.getWorld().getBlockAt(loc).setType(Material.BEACON);
@@ -299,57 +342,227 @@ public class ArenaSetup {
                     Material.STICK,
                     "&e&lADD CHEST",
                     Arrays.asList(
-                            "&7Right click to chest to",
-                            "&7set it as spawn's chests"
+                            "&eRight click&7 to chest to",
+                            "&7set it as spawn's chests",
+                            "",
+                            "&eLeft click&7 to remove chest"
                     ),
                     null
             ))
             .setInteract(Action.RIGHT_CLICK_BLOCK, event -> {
                 event.setCancelled(true);
+
+                ArenaSetup arenaSetup = ArenaSetupManager.getByEditor(GamePlayer.getGamePlayer(event.getPlayer()));
+                if (arenaSetup == null) return;
+
+                if (arenaSetup.getCurrentSpawn() == 0 || arenaSetup.getCurrentSpawn() > MAX_SPAWNS) {
+                    arenaSetup.getEditor().sendMessage("&4&lERROR!&r&c No spawn provided!");
+                    return;
+                }
+
+                if (arenaSetup.getSpawnChests().get(arenaSetup.getCurrentSpawn()).size() == CHEST_PER_SPAWN) {
+                    arenaSetup.getEditor().sendMessage("&4&lERROR!&r&c Reached maximum chests per spawn!");
+                    return;
+                }
+
+                Block block = event.getClickedBlock();
+                if (block == null || !block.getType().equals(Material.CHEST)) return;
+
+                TemplateBlock templateBlock = new TemplateBlock(block.getLocation(), arenaSetup.getCurrentSpawn());
+                TemplateArena.TemplateLocation templateLocation = templateBlock.toTemplateLocation();
+
+                for (List<TemplateArena.TemplateLocation> locations : arenaSetup.getSpawnChests().values()) {
+                    if (locations.contains(templateLocation)) {
+                        arenaSetup.getEditor().sendMessage("&4&lERROR!&r&c This chest has been added to a team");
+                        return;
+                    }
+                }
+                if (arenaSetup.getMidChests().contains(templateLocation)) {
+                    arenaSetup.getEditor().sendMessage("&4&lERROR!&r&c This chest had already a mid chest!");
+                    return;
+                }
+                templateBlock.getHologram().setLines(
+                        "&aTeam #" + arenaSetup.getCurrentSpawn() +"'s chest",
+                        "",
+                        "&eLeft click to remove!");
+                templateBlock.setConsumer(e -> {
+                    if (arenaSetup.getSpawnChests().containsKey(templateBlock.getTeamNumber()) &&
+                            arenaSetup.getSpawnChests().get(templateBlock.getTeamNumber()).contains(templateLocation)) {
+
+                        arenaSetup.getSpawnChests().get(templateBlock.getTeamNumber()).remove(templateLocation);
+                        arenaSetup.getEditor().sendMessage("&2&lREMOVED!&r&aa A chest in &eteam " + templateBlock.getTeamNumber() +" &ahas been removed!");
+                        templateBlock.destroy();
+                    }
+                });
+
+                arenaSetup.getSpawnChests().get(arenaSetup.getCurrentSpawn()).add(templateBlock.toTemplateLocation());
+
+    });
+    private static final InteractiveItem midChestStick = new InteractiveItem(
+            Utils.buildItem(Material.BLAZE_ROD, "&6&lMID CHEST ADDER",
+                    Arrays.asList(
+                            "&7Right click to chest at mid",
+                            "&7to add it to mid chest list.",
+                            "",
+                            "&7Left click to remove it."
+                    ),
+                    null)
+    ).setInteract(Action.RIGHT_CLICK_BLOCK, event -> {
+        ArenaSetup arenaSetup = ArenaSetupManager.getByEditor(GamePlayer.getGamePlayer(event.getPlayer()));
+        if (arenaSetup == null) return;
+
+        Block block = event.getClickedBlock();
+        if (block == null || !block.getType().equals(Material.CHEST)) return;
+
+        TemplateBlock templateBlock = new TemplateBlock(block.getLocation(), -1);
+        TemplateArena.TemplateLocation templateLocation = templateBlock.toTemplateLocation();
+
+        for (List<TemplateArena.TemplateLocation> locations : arenaSetup.getSpawnChests().values()) {
+            if (locations.contains(templateLocation)) {
+                arenaSetup.getEditor().sendMessage("&4&lERROR!&r&c This chest has been added to a team");
+                return;
+            }
+        }
+
+        if (arenaSetup.getMidChests().contains(templateLocation)) {
+            arenaSetup.getEditor().sendMessage("&4&lERROR!&r&c This chest had already a mid chest!");
+            return;
+        }
+        templateBlock.getHologram().setLines(
+                "&aMid chest",
+                "",
+                "&eLeft click to remove!");
+        templateBlock.setConsumer(e -> {
+            event.setCancelled(true);
+            if (arenaSetup.getMidChests().contains(templateLocation)) {
+                arenaSetup.getMidChests().remove(templateLocation);
+                templateBlock.destroy();
+                arenaSetup.getEditor().sendMessage("&2&lREMOVED!&r&a A mid chest has been removed!");
+            }
+        });
+        arenaSetup.getMidChests().add(templateLocation);
     });
     private static final InteractiveItem cancelItem = new InteractiveItem(
             Utils.buildItem(
                     Material.WOOL,
                     "&c&lCANCEL",
-                    Arrays.asList(),
+                    Collections.emptyList(),
                     null
             ))
             .setInteract(Arrays.asList(Action.values()), event -> {
                 event.setCancelled(true);
+
+                ArenaSetup arenaSetup = ArenaSetupManager.getByEditor(GamePlayer.getGamePlayer(event.getPlayer()));
+                if (arenaSetup == null) return;
+
+                arenaSetup.cancel();
     });
     private static final InteractiveItem nextStageItem = new InteractiveItem(
             Utils.buildItem(
                     Material.WOOL,
                     "&2&lNEXT STAGE",
-                    Arrays.asList(),
+                    Collections.emptyList(),
                     null
             ))
             .setInteract(
                     Arrays.asList(Action.RIGHT_CLICK_BLOCK, Action.RIGHT_CLICK_AIR), event -> {
                         event.setCancelled(true);
+
+                        ArenaSetup arenaSetup = ArenaSetupManager.getByEditor(GamePlayer.getGamePlayer(event.getPlayer()));
+                        if (arenaSetup == null) return;
+
+                        boolean valid = true;
+
+                        for (int i = 1; i <= MAX_SPAWNS; ++i) {
+                            if (!arenaSetup.getSpawns().containsKey(i)) {
+                                arenaSetup.getEditor().sendMessage("&4&lERROR!&r&c Team " +i +"'s spawn hasn't been set");
+                                valid = false;
+                            }
+                            if (arenaSetup.getSpawnChests().get(i).size() != CHEST_PER_SPAWN) {
+                                arenaSetup.getEditor().sendMessage("&4&lERROR!&r&c Team " +i +"'s chests number hasn't reached " + CHEST_PER_SPAWN);
+                                valid = false;
+                            }
+                        }
+
+                        if (!valid) return;
+
+                        arenaSetup.setStage(ArenaSetupStage.MID);
                     });
     private static final InteractiveItem previousStageItem = new InteractiveItem(
             Utils.buildItem(
                     Material.WOOL,
                     "&2&lPREVIOUS STAGE",
-                    Arrays.asList(),
+                    Collections.emptyList(),
                     null
             ))
             .setInteract(
                     Arrays.asList(Action.RIGHT_CLICK_BLOCK, Action.RIGHT_CLICK_AIR),
                     event -> {
                         event.setCancelled(true);
+                        ArenaSetup arenaSetup = ArenaSetupManager.getByEditor(GamePlayer.getGamePlayer(event.getPlayer()));
+                        if (arenaSetup == null) return;
+                        arenaSetup.setStage(ArenaSetupStage.SPAWN);
                     });
     private static final InteractiveItem saveItem = new InteractiveItem(
             Utils.buildItem(
                     Material.WOOL,
                     "&a&lSAVE",
-                    Arrays.asList(),
+                    Collections.emptyList(),
                     null
             ))
             .setInteract(
                     Arrays.asList(Action.RIGHT_CLICK_BLOCK, Action.RIGHT_CLICK_AIR),
                     event -> {
                         event.setCancelled(true);
+                        ArenaSetup arenaSetup = ArenaSetupManager.getByEditor(GamePlayer.getGamePlayer(event.getPlayer()));
+                        if (arenaSetup == null) return;
+
+
+                        //TODO: Replace current file
+                        FileConfig fileConfig = new FileConfig("maps/" + arenaSetup.getMapName() + ".yml");
+
+
+                        fileConfig.addDefault("name",Utils.toBetterName(arenaSetup.getMapName()));
+
+                        List<Map<String, Object>> spawnsData = new ArrayList<>();
+                        for (int i = 1; i < MAX_SPAWNS; ++i) {
+                            Map<String, Object> spawnData = new HashMap<>();
+                            List<Map<String, Object>> spawnChestsData = new ArrayList<>();
+
+                            TemplateArena.TemplateLocation spawnLocation = arenaSetup.getSpawns().get(i);
+                            spawnData.put("x", spawnLocation.getX());
+                            spawnData.put("y", spawnLocation.getY());
+                            spawnData.put("z", spawnLocation.getZ());
+                            spawnData.put("yaw", spawnLocation.getYaw());
+                            spawnData.put("pitch", spawnLocation.getPitch());
+
+                            for (TemplateArena.TemplateLocation chestLocation : arenaSetup.getSpawnChests().get(i)) {
+                                Map<String, Object> chestData = new HashMap<>();
+                                chestData.put("x", chestLocation.getX());
+                                chestData.put("y", chestLocation.getY());
+                                chestData.put("z", chestLocation.getZ());
+                                spawnChestsData.add(chestData);
+                            }
+                            spawnData.put("chests", spawnChestsData);
+                            spawnsData.add(spawnData);
+                        }
+
+                        List<Map<String, Object>> midChestsData = new ArrayList<>();
+                        for (int i = 0; i < arenaSetup.getMidChests().size(); ++i) {
+                            Map<String, Object> midChestData = new HashMap<>();
+                            TemplateArena.TemplateLocation chestLocation = arenaSetup.getMidChests().get(i);
+                            midChestData.put("x", chestLocation.getX());
+                            midChestData.put("y", chestLocation.getY());
+                            midChestData.put("z", chestLocation.getZ());
+                            midChestsData.add(midChestData);
+                        }
+
+                        fileConfig.addDefault("spawns",spawnsData);
+                        fileConfig.addDefault("midChests", midChestsData);
+
+                        fileConfig.removeFile(); 
+                        fileConfig.saveConfig();
+
+                        TemplateBlock.removeWorld(arenaSetup.getWorld());
                     });
 }

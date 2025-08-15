@@ -128,4 +128,8 @@ public class FileConfig {
             exception.printStackTrace();
         }
     }
+
+    public boolean removeFile() {
+        return file == null || file.delete();
+    }
 }

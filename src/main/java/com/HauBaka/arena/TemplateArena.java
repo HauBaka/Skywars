@@ -49,7 +49,7 @@ public class TemplateArena {
         load();
     }
     private void load() {
-        this.name = fileConfig.getConfig().getString("name");
+        this.name = fileConfig.getConfig().getString("name", Utils.toBetterName(mapName));
 
         // Load spawns + spawnChests
         this.spawns = new ArrayList<>();
