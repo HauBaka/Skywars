@@ -22,7 +22,6 @@ public class ArenaManager {
         arenaList.put(arena.getId(), arena);
         return arena;
     }
-
     public static String generateID() {
         String id = "";
         while (id.isEmpty() || arenaList.containsKey(id)) {

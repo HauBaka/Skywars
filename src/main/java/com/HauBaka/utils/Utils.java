@@ -117,16 +117,21 @@ public class Utils {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
 
-        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
+        if (name != null)
+            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
 
-        List<String> coloredLore = new ArrayList<>();
-        for (String s : lore) {
-            coloredLore.add(ChatColor.translateAlternateColorCodes('&', s));
+        if (lore != null && !lore.isEmpty()) {
+            List<String> coloredLore = new ArrayList<>();
+            for (String s : lore) {
+                coloredLore.add(ChatColor.translateAlternateColorCodes('&', s));
+            }
+            meta.setLore(coloredLore);
         }
-        meta.setLore(coloredLore);
 
-        for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
-            meta.addEnchant(entry.getKey(), entry.getValue(), true);
+        if (enchantments != null) {
+            for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+                meta.addEnchant(entry.getKey(), entry.getValue(), true);
+            }
         }
 
         item.setItemMeta(meta);
@@ -136,16 +141,20 @@ public class Utils {
         ItemStack item = itemStack.clone();
         ItemMeta meta = item.getItemMeta();
 
-        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
+        if (name != null)meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
 
-        List<String> coloredLore = new ArrayList<>();
-        for (String s : lore) {
-            coloredLore.add(ChatColor.translateAlternateColorCodes('&', s));
+        if (lore != null && !lore.isEmpty()) {
+            List<String> coloredLore = new ArrayList<>();
+            for (String s : lore) {
+                coloredLore.add(ChatColor.translateAlternateColorCodes('&', s));
+            }
+            meta.setLore(coloredLore);
         }
-        meta.setLore(coloredLore);
 
-        for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
-            meta.addEnchant(entry.getKey(), entry.getValue(), true);
+        if (enchantments != null) {
+            for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+                meta.addEnchant(entry.getKey(), entry.getValue(), true);
+            }
         }
 
         item.setItemMeta(meta);

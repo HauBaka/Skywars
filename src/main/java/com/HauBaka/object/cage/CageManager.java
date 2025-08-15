@@ -73,9 +73,9 @@ public class CageManager {
                     }
                     break;
                 case "SINGLE":
-                    int x = (int) entry.get("x");
-                    int y = (int) entry.get("y");
-                    int z = (int) entry.get("z");
+                    int x = ((Number) entry.get("x")).intValue();
+                    int y = ((Number) entry.get("y")).intValue();
+                    int z = ((Number) entry.get("z")).intValue();
                     blocks.add(new Cage.CageBlock(x, y, z, material, data));
                     break;
             }

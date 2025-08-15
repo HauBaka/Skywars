@@ -165,8 +165,13 @@ public class ArenaSetup {
         setItems();
     }
 
-    public void cancel() {
+    public void stopEdit() {
+        this.editor.getPlayer().getInventory().clear();
+        for (int slot : oldInventory.keySet())
+            this.editor.getPlayer().getInventory().setItem(slot, oldInventory.get(slot));
 
+        TemplateBlock.removeWorld(world);
+        ArenaSetupManager.removeEdit(this);
     }
 
     private void setItems() {
@@ -396,7 +401,6 @@ public class ArenaSetup {
                 });
 
                 arenaSetup.getSpawnChests().get(arenaSetup.getCurrentSpawn()).add(templateBlock.toTemplateLocation());
-
     });
     private static final InteractiveItem midChestStick = new InteractiveItem(
             Utils.buildItem(Material.BLAZE_ROD, "&6&lMID CHEST ADDER",
@@ -455,7 +459,7 @@ public class ArenaSetup {
                 ArenaSetup arenaSetup = ArenaSetupManager.getByEditor(GamePlayer.getGamePlayer(event.getPlayer()));
                 if (arenaSetup == null) return;
 
-                arenaSetup.cancel();
+                arenaSetup.stopEdit();
     });
     private static final InteractiveItem nextStageItem = new InteractiveItem(
             Utils.buildItem(
@@ -517,15 +521,11 @@ public class ArenaSetup {
                         ArenaSetup arenaSetup = ArenaSetupManager.getByEditor(GamePlayer.getGamePlayer(event.getPlayer()));
                         if (arenaSetup == null) return;
 
-
-                        //TODO: Replace current file
                         FileConfig fileConfig = new FileConfig("maps/" + arenaSetup.getMapName() + ".yml");
-
-
                         fileConfig.addDefault("name",Utils.toBetterName(arenaSetup.getMapName()));
 
                         List<Map<String, Object>> spawnsData = new ArrayList<>();
-                        for (int i = 1; i < MAX_SPAWNS; ++i) {
+                        for (int i = 1; i <= MAX_SPAWNS; ++i) {
                             Map<String, Object> spawnData = new HashMap<>();
                             List<Map<String, Object>> spawnChestsData = new ArrayList<>();
 
@@ -557,8 +557,8 @@ public class ArenaSetup {
                             midChestsData.add(midChestData);
                         }
 
-                        fileConfig.addDefault("spawns",spawnsData);
-                        fileConfig.addDefault("midChests", midChestsData);
+                        fileConfig.getConfig().set("spawns", spawnsData);
+                        fileConfig.getConfig().set("midChests", midChestsData);
 
                         fileConfig.removeFile(); 
                         fileConfig.saveConfig();

@@ -69,7 +69,7 @@ public class ArenaChest {
     public static void init() {
         chestItems = new HashMap<>();
         FileConfig fileConfig = new FileConfig("refill.yml");
-
+        fileConfig.saveDefaultConfig();
         for (String phaseKey : fileConfig.getConfig().getKeys(false)) {
             // Map string phase -> ArenaState
             ArenaState state;

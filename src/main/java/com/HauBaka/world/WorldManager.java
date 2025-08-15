@@ -28,7 +28,13 @@ public class WorldManager  {
         slimeProperties = SlimeWorld.SlimeProperties.builder().difficulty(0).allowAnimals(false).allowMonsters(false).spawnX(0).spawnY(50).spawnZ(0).pvp(false).readOnly(true).build();
         slimeLoader = slimePlugin.getLoader("file");
     }
-
+    public static boolean checkExistWorldName(String name) {
+        try {
+            return slimeLoader.worldExists(name);
+        } catch (Exception e) {
+            return false;
+        }
+    }
     /***
      * TODO: Chưa kiểm tra xem, file .slime tồn tại hay chưa
      * Hàm sẽ tạo ra một thế giới mới - clone dựa trên file .slime

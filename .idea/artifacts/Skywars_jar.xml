@@ -5,7 +5,6 @@
       <element id="module-output" name="Skywars" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/grinderwolf/slimeworldmanager-api/2.2.1/slimeworldmanager-api-2.2.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/flowpowered/flow-nbt/2.0.0/flow-nbt-2.0.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/co/aikar/acf-bukkit/0.5.1-SNAPSHOT/acf-bukkit-0.5.1-20250715.154406-47.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

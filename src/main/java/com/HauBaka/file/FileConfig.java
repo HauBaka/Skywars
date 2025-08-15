@@ -63,7 +63,7 @@ public class FileConfig {
         try {
             getConfig().save(this.file);
         } catch (IOException iOException) {
-            Skywars.getLogger().warn("Could not save config to {}", this.fileConfiguration, iOException);
+            Skywars.getPluginLogger().warn("Could not save config to {}", this.fileConfiguration, iOException);
         }
     }
     /**
@@ -118,10 +118,10 @@ public class FileConfig {
                 }
                 if (bool) {
                     saveConfig();
-                    Skywars.getLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.GREEN + "updating a config...");
+                    Skywars.getPluginLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.GREEN + "updating a config...");
                     for (Map.Entry<Object, Object> entry : hashMap.entrySet())
-                        Skywars.getLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.YELLOW + (String)entry.getKey() + " " + ChatColor.GREEN + " value " + ChatColor.YELLOW + entry.getValue());
-                    Skywars.getLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.GREEN + "config has been updated!");
+                        Skywars.getPluginLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.YELLOW + (String)entry.getKey() + " " + ChatColor.GREEN + " value " + ChatColor.YELLOW + entry.getValue());
+                    Skywars.getPluginLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.GREEN + "config has been updated!");
                 }
             }
         } catch (Exception exception) {

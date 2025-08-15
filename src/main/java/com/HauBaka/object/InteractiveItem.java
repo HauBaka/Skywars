@@ -52,8 +52,8 @@ public class InteractiveItem implements Listener {
     @EventHandler
     public void interact(PlayerInteractEvent event) {
         ItemStack hand = event.getItem();
-        if (hand == null || !hand.isSimilar(this.item) || !NBTUtil.hasKey(hand, this.key)) return;
-
+        // || !NBTUtil.hasKey(hand, this.key)
+        if (!hand.isSimilar(this.item)) return;
         Consumer<PlayerInteractEvent> consumer = consumers.get(event.getAction());
         if (consumer != null) consumer.accept(event);
     }
