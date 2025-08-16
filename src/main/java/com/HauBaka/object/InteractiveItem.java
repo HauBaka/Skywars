@@ -28,11 +28,11 @@ public class InteractiveItem implements Listener {
     private boolean allowChangeSlot;
 
     public InteractiveItem(ItemStack item) {
-        this.item = item.clone();
         this.consumers = new HashMap<>();
         this.key = Utils.generateID(4);
         this.allowChangeSlot = false;
-        NBTUtil.setString(this.item, this.key, "1");
+        this.item = NBTUtil.setString(item, this.key, "1");
+        System.out.println(NBTUtil.getString(this.item, this.key));
         Bukkit.getPluginManager().registerEvents(this, Skywars.getInstance());
     }
     public InteractiveItem setInteract(List<Action> actions, Consumer<PlayerInteractEvent> consumer) {
@@ -53,7 +53,8 @@ public class InteractiveItem implements Listener {
     public void interact(PlayerInteractEvent event) {
         ItemStack hand = event.getItem();
         // || !NBTUtil.hasKey(hand, this.key)
-        if (!hand.isSimilar(this.item)) return;
+        if (hand == null || !hand.isSimilar(this.item)) return;
+        System.out.println(this.key +": " + NBTUtil.getString(hand, this.key));
         Consumer<PlayerInteractEvent> consumer = consumers.get(event.getAction());
         if (consumer != null) consumer.accept(event);
     }

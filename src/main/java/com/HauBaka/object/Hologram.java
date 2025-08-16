@@ -27,15 +27,18 @@ public class Hologram {
 
     public void setLines(String... lines) {
         clearLines();
-        double yOffset = 0;
+        double yOffset = 0.25*(lines.length+1);
         for (String line : lines) {
-            spawnLine(baseLocation.clone().add(0, yOffset, 0), ChatColor.translateAlternateColorCodes('&', line));
             yOffset -= 0.25;
+            if (line.isEmpty()) continue;
+            spawnLine(baseLocation.clone().add(0, yOffset, 0), ChatColor.translateAlternateColorCodes('&', line));
+
         }
     }
 
     public void addLine(String text) {
         double yOffset = -armorStands.size() * 0.25;
+        if (text.isEmpty()) text = ChatColor.RESET.toString();
         spawnLine(baseLocation.clone().add(0, yOffset, 0), ChatColor.translateAlternateColorCodes('&', text));
     }
     public void setLine(int index, String text) {

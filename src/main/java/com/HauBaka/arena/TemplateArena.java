@@ -30,6 +30,15 @@ public class TemplateArena {
             this.Yaw = location.getYaw();
             this.Pitch = location.getPitch();
         }
+
+        public boolean equals(TemplateLocation other) {
+            return other != null &&
+                    other.getX() == X &&
+                    other.getY() == Y &&
+                    other.getZ() == Z &&
+                    other.getPitch() == Pitch &&
+                    other.getYaw() == Yaw;
+        }
     }
     @Getter
     private final String mapName;
