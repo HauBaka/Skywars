@@ -93,10 +93,11 @@ public class TemplateBlock implements Listener {
     @EventHandler
     public void interact(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
-        if (block != null && block.getLocation().equals(this.loc)) {
+        if (block != null &&
+                block.getLocation().equals(this.loc) &&
+                consumers.containsKey(event.getAction())) {
             event.setCancelled(true);
-            if (consumers.containsKey(event.getAction()))
-                consumers.get(event.getAction()).accept(event);
+            consumers.get(event.getAction()).accept(event);
         }
     }
 

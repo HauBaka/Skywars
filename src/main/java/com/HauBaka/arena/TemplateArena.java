@@ -1,5 +1,7 @@
 package com.HauBaka.arena;
 
+import com.HauBaka.arena.setup.ArenaSetup;
+import com.HauBaka.enums.ArenaSetupStage;
 import com.HauBaka.utils.Utils;
 import com.HauBaka.object.ArenaChest;
 import com.HauBaka.file.FileConfig;
@@ -45,13 +47,15 @@ public class TemplateArena {
     @Getter
     private String name;
     @Getter
+    private TemplateLocation lobby;
+    @Getter
     private List<TemplateLocation> spawns;
     @Getter
     private List<List<TemplateLocation>> spawnChests;
     @Getter
     private List<TemplateLocation> midChests;
     private final FileConfig fileConfig;
-    TemplateArena(String mapName) {
+    public TemplateArena(String mapName) {
         this.mapName = mapName;
         this.name = Utils.toBetterName(mapName);
         fileConfig = new FileConfig("/maps/" + mapName +".yml");
@@ -63,7 +67,14 @@ public class TemplateArena {
         // Load spawns + spawnChests
         this.spawns = new ArrayList<>();
         this.spawnChests = new ArrayList<>();
-
+        if (fileConfig.getConfig().contains("lobby")) {
+            lobby = new TemplateLocation(
+                    fileConfig.getConfig().getDouble("lobby.x"),
+                    fileConfig.getConfig().getDouble("lobby.y"),
+                    fileConfig.getConfig().getDouble("lobby.z"),
+                    0f, 0f
+            );
+        }
         List<Map<?, ?>> spawnsList = fileConfig.getConfig().getMapList("spawns");
         for (Map<?, ?> spawnMap : spawnsList) {
             TemplateLocation spawnLoc = mapToTemplateLocation(spawnMap);
@@ -97,7 +108,8 @@ public class TemplateArena {
         return new TemplateLocation(x, y, z, yaw, pitch);
     }
 
-    public void clone(Arena arena) {
+    public void setUp(Arena arena) {
+        arena.setLobby(arena.getWorld().getBlockAt((int) lobby.getX(), (int) lobby.getY(), (int) lobby.getZ()).getLocation());
         //Add spawn and its chests.
         for (int i = 0 ; i < spawns.size(); ++i) {
             TemplateLocation templateLocation = spawns.get(i);
@@ -123,5 +135,33 @@ public class TemplateArena {
             arena.getMidChests().add(arenaChest);
         }
     }
-
+    public void setUp(ArenaSetup arenaSetup) {
+        //Add spawn and its chests.
+        if (lobby != null)
+            arenaSetup.setLobby(
+                    arenaSetup.getWorld().getBlockAt(
+                            (int) lobby.getX(),
+                            (int) lobby.getY(),
+                            (int) lobby.getZ()
+                    ).getLocation()
+            );
+        for (int i = 0 ; i < spawns.size(); ++i) {
+            TemplateLocation templateLocation = spawns.get(i);
+            Location spawn = new Location(arenaSetup.getWorld(),
+                    templateLocation.getX(), templateLocation.getY(), templateLocation.getZ(),
+                    templateLocation.getYaw(), templateLocation.getPitch());
+            arenaSetup.addTeam(spawn);
+            for (TemplateLocation chestTemplateLocation : spawnChests.get(i)) {
+                Location chestSpawn = new Location(arenaSetup.getWorld(),
+                        chestTemplateLocation.getX(), chestTemplateLocation.getY(), chestTemplateLocation.getZ());
+                arenaSetup.addChest(chestSpawn.getBlock(), ArenaSetupStage.SPAWN);
+            }
+        }
+        //Add mid-chests
+        for (TemplateLocation midTemplateLocation : midChests) {
+            Location chestSpawn = new Location(arenaSetup.getWorld(),
+                    midTemplateLocation.getX(), midTemplateLocation.getY(), midTemplateLocation.getZ());
+            arenaSetup.addChest(chestSpawn.getBlock(), ArenaSetupStage.MID);
+        }
+    }
 }

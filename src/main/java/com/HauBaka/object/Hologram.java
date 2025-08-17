@@ -1,9 +1,7 @@
 package com.HauBaka.object;
 
-import com.HauBaka.Skywars;
 import net.minecraft.server.v1_8_R3.EntityArmorStand;
 import net.minecraft.server.v1_8_R3.NBTTagCompound;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftArmorStand;
@@ -32,7 +30,6 @@ public class Hologram {
             yOffset -= 0.25;
             if (line.isEmpty()) continue;
             spawnLine(baseLocation.clone().add(0, yOffset, 0), ChatColor.translateAlternateColorCodes('&', line));
-
         }
     }
 
@@ -58,23 +55,21 @@ public class Hologram {
     }
 
     private void spawnLine(Location loc, String text) {
-        Bukkit.getScheduler().runTask(Skywars.getInstance(), () -> {
-            ArmorStand as = loc.getWorld().spawn(loc, ArmorStand.class);
-            as.setVisible(false);
-            as.setGravity(false);
-            as.setCustomNameVisible(true);
-            as.setMarker(true);
-            as.setCustomName(text);
+        ArmorStand as = loc.getWorld().spawn(loc, ArmorStand.class);
+        as.setVisible(false);
+        as.setGravity(false);
+        as.setCustomNameVisible(true);
+        as.setMarker(true);
+        as.setCustomName(text);
 
-            // NMS: set Invulnerable
-            EntityArmorStand nmsAS = ((CraftArmorStand) as).getHandle();
-            NBTTagCompound tag = new NBTTagCompound();
-            nmsAS.c(tag);
-            tag.setBoolean("Invulnerable", true);
-            nmsAS.f(tag);
+        // NMS: set Invulnerable
+        EntityArmorStand nmsAS = ((CraftArmorStand) as).getHandle();
+        NBTTagCompound tag = new NBTTagCompound();
+        nmsAS.c(tag);
+        tag.setBoolean("Invulnerable", true);
+        nmsAS.f(tag);
 
-            armorStands.add(as);
-        });
+        armorStands.add(as);
     }
 
     public void destroy() {

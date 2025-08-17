@@ -4,6 +4,7 @@ import co.aikar.commands.PaperCommandManager;
 import com.HauBaka.arena.ArenaManager;
 import com.HauBaka.arena.setup.ArenaSetupManager;
 import com.HauBaka.command.arenaSetupCommand;
+import com.HauBaka.command.skywarsCommand;
 import com.HauBaka.command.testCommand;
 import com.HauBaka.file.FileConfig;
 import com.HauBaka.object.cage.CageManager;
@@ -55,6 +56,7 @@ public class Skywars extends JavaPlugin {
     private void registerCommands() {
         PaperCommandManager manager = new PaperCommandManager(this);
         manager.registerCommand(new testCommand());
+        manager.registerCommand(new skywarsCommand());
         manager.registerCommand(new arenaSetupCommand());
     }
 }

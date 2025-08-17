@@ -7,7 +7,9 @@ import com.HauBaka.event.ArenaStageChangeEvent;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.world.WorldManager;
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 
 import java.util.List;
@@ -33,7 +35,8 @@ public class Arena {
     private World world;
     @Getter
     private List<ArenaChest> midChests;
-
+    @Getter @Setter
+    private Location lobby;
 
     public Arena(TemplateArena templateArena, ArenaVariant variant) {
         this.variant = variant;
@@ -46,7 +49,7 @@ public class Arena {
     private void create() {
         WorldManager.cloneWorld(templateArena.getMapName(), ArenaManager.generateID(), w -> {
             this.world = w;
-            templateArena.clone(this);
+            templateArena.setUp(this);
         });
     }
 

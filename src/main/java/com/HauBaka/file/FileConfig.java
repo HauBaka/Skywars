@@ -18,19 +18,36 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public class FileConfig {
-    private final Skywars skywars;
     private final String filename;
     @Getter
     private File file;
     private FileConfiguration fileConfiguration;
 
     public FileConfig(String filename) {
-        skywars = Skywars.getInstance();
         this.filename = filename;
-        file = skywars.getDataFolder();
+        file = Skywars.getInstance().getDataFolder();
         if (file == null) throw new NullPointerException();
         this.file = new File(file.toString() + File.separatorChar + this.filename);
     }
+    public FileConfig(String filename, boolean createIfNotExist) {
+        this.filename = filename;
+        file = Skywars.getInstance().getDataFolder();
+        if (file == null) throw new NullPointerException();
+        this.file = new File(file, this.filename);
+
+        if (createIfNotExist && !this.file.exists()) {
+            try {
+                if (this.file.getParentFile() != null) {
+                    this.file.getParentFile().mkdirs();
+                }
+                this.file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        this.fileConfiguration = YamlConfiguration.loadConfiguration(file);
+    }
+
     /**
      * Reloads the configuration file from disk and applies defaults from the plugin's resources.
      */
@@ -40,7 +57,7 @@ public class FileConfig {
         } catch (UnsupportedEncodingException | FileNotFoundException cause) {
             cause.printStackTrace();
         }
-        InputStream inputStream = this.skywars.getResource(this.filename);
+        InputStream inputStream = Skywars.getInstance().getResource(this.filename);
         if (inputStream != null) {
             YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(inputStream);
             this.fileConfiguration.setDefaults((Configuration)yamlConfiguration);
@@ -75,7 +92,7 @@ public class FileConfig {
      */
     public void saveDefaultConfig() {
         if (!this.file.exists())
-            this.skywars.saveResource(this.filename, false);
+            Skywars.getInstance().saveResource(this.filename, false);
     }
     /**
      * Adds a default value to the configuration if the key does not already exist.
@@ -105,7 +122,7 @@ public class FileConfig {
             if (this.file.exists()) {
                 HashMap<Object, Object> hashMap = new HashMap<>();
                 boolean bool = false;
-                InputStream inputStream = skywars.getResource(this.file.getName());
+                InputStream inputStream = Skywars.getInstance().getResource(this.file.getName());
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                 new YamlConfiguration();
                 YamlConfiguration yamlConfiguration = YamlConfiguration.loadConfiguration(inputStreamReader);

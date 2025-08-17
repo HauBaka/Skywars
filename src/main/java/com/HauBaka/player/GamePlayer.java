@@ -1,6 +1,7 @@
 package com.HauBaka.player;
 
 import com.HauBaka.object.GameScoreboard;
+import com.HauBaka.utils.ChatUtils;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;

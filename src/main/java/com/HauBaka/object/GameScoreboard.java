@@ -12,7 +12,7 @@ import java.util.*;
 public class GameScoreboard {
 
     private static final int MAX_LINES = 15;
-
+    private int size;
     @Getter
     private final Scoreboard scoreboard;
     private Objective objective;
@@ -27,7 +27,7 @@ public class GameScoreboard {
     public GameScoreboard(GamePlayer gamePlayer) {
         this.gamePlayer = gamePlayer;
         this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-
+        this.size = 0;
         String objName = ("sw-" + gamePlayer.getPlayer().getUniqueId().toString().replace("-", ""))
                 .substring(0, Math.min(16, ("sw-" + gamePlayer.getPlayer().getUniqueId()).length()));
 
@@ -46,16 +46,15 @@ public class GameScoreboard {
 
     public void setContents(List<String> contents) {
         if (contents == null) contents = Collections.emptyList();
-
+        Collections.reverse(contents);
         List<String> list = new ArrayList<>(contents);
         if (list.size() > MAX_LINES) list = list.subList(0, MAX_LINES);
 
-        int n = list.size();
-        for (int i = 0; i < n; i++) {
+        this.size = Math.min(MAX_LINES, contents.size());
+        for (int i = 0; i < size; i++) {
             setLine(i, list.get(i));
         }
-
-        for (int i = n; i < MAX_LINES; i++) {
+        for (int i = size; i < MAX_LINES; i++) {
             clearLine(i);
         }
     }
@@ -69,21 +68,16 @@ public class GameScoreboard {
         Team team = lineTeams.get(index);
         if (team == null || !scoreboard.getTeams().contains(team)) {
             String teamName = ("line-" + index);
-            if (teamName.length() > 16) teamName = teamName.substring(0, 16);
-
             team = scoreboard.getTeam(teamName);
             if (team == null) team = scoreboard.registerNewTeam(teamName);
             lineTeams.put(index, team);
         }
-
         if (!team.hasEntry(entry)) {
-            objective.getScore(entry).setScore(MAX_LINES - index);
+            objective.getScore(entry).setScore(index+1);
             team.addEntry(entry);
         }
-
         applyTextToTeam(team, text);
     }
-
     public void clearLine(int index) {
         if (index < 0 || index >= MAX_LINES) return;
         String entry = entries[index];
@@ -96,31 +90,25 @@ public class GameScoreboard {
             try { team.unregister(); } catch (IllegalStateException ignored) {}
         }
     }
-
     public void show() {
         Player p = gamePlayer.getPlayer();
         if (p != null && p.isOnline()) {
             p.setScoreboard(scoreboard);
         }
     }
-
     public void hide() {
         Player p = gamePlayer.getPlayer();
         if (p != null && p.isOnline()) {
             p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
         }
     }
-
     public void destroy() {
         for (int i = 0; i < MAX_LINES; i++) clearLine(i);
         try { objective.unregister(); } catch (Exception ignored) {}
     }
-
-
     private static String colorize(String s) {
         return s == null ? "" : ChatColor.translateAlternateColorCodes('&', s);
     }
-
     /**
      * Chia text vào team prefix/suffix (mỗi phần tối đa 16 char ở 1.8, kể cả mã màu).
      * Giữ màu ở suffix bằng ChatColor.getLastColors(prefix).
@@ -153,15 +141,12 @@ public class GameScoreboard {
         safeSetPrefix(team, prefix);
         safeSetSuffix(team, suffix);
     }
-
     private static void safeSetPrefix(Team team, String s) {
         try { team.setPrefix(s); } catch (IllegalArgumentException ignored) {}
     }
-
     private static void safeSetSuffix(Team team, String s) {
         try { team.setSuffix(s); } catch (IllegalArgumentException ignored) {}
     }
-
     private static String[] buildEntries() {
         String[] arr = new String[MAX_LINES];
         List<ChatColor> pool = new ArrayList<>();
