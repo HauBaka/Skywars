@@ -50,6 +50,11 @@ public class Utils {
         }
         return result.toString();
     }
+    public static String secondsToTime(int seconds) {
+        int minutes = seconds/60;
+        int second = seconds%60;
+        return minutes + ":" + (second < 10 ? "0":"") + second;
+    }
     /**
      *
      * @param format: Default(dd/MM/yyyy)

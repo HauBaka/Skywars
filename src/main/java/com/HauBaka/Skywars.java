@@ -24,6 +24,8 @@ public class Skywars extends JavaPlugin {
     @Getter
     private FileConfig messageConfig;
     @Getter
+    private FileConfig config;
+    @Getter
     private static Skywars instance;
 
     @Override
@@ -38,6 +40,8 @@ public class Skywars extends JavaPlugin {
         GamePlayer.init();
         this.messageConfig = new FileConfig("messages.yml");
         this.messageConfig.saveDefaultConfig();
+        this.config = new FileConfig("config.yml");
+        this.config.saveDefaultConfig();
         registerCommands();
         registerEvents();
     }

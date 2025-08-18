@@ -15,6 +15,7 @@ public class ArenaManager {
     public static void init() {
         arenaList = new HashMap<>();
         ArenaChest.init();
+        ScoreboardData.init();
     }
 
     public static Arena createArena(TemplateArena templateArena, ArenaVariant variant) {

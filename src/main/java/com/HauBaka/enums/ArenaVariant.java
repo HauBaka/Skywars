@@ -6,17 +6,17 @@ public class ArenaVariant {
     public enum Mode {
         SOLO(12,1, 2),
         DOUBLES(24,2, 2),
-        MEGA(100,5, 2);
+        MEGA(60,5, 2);
 
         @Getter
         final
-        int amountPlayer;
+        int maxPlayer;
         @Getter
         final int playerPerTeam;
         @Getter
         int minPlayer;
-        Mode(int amountPlayer, int playerPerTeam, int minPlayer) {
-            this.amountPlayer = amountPlayer;
+        Mode(int maxPlayer, int playerPerTeam, int minPlayer) {
+            this.maxPlayer = maxPlayer;
             this.playerPerTeam = playerPerTeam;
         }
     }

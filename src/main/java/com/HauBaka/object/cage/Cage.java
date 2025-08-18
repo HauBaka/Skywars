@@ -27,6 +27,11 @@ public class Cage {
             block.setType(material);
             block.setData(data, false);
         }
+
+        public void remove(Location base) {
+            Block block = base.clone().add(x, y, z).getBlock();
+            block.setType(Material.AIR);
+        }
     }
     private final List<CageBlock> blocks;
     @Getter
@@ -42,6 +47,9 @@ public class Cage {
         for (CageBlock block : blocks)
             block.place(baseLocation);
     }
-
+    public void remove(Location baseLocation) {
+        for (CageBlock block : blocks)
+            block.remove(baseLocation);
+    }
 
 }

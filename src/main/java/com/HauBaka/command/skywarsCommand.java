@@ -58,7 +58,7 @@ public class skywarsCommand extends BaseCommand {
         ChatUtils.sendComplexMessage(sender,
                 ChatUtils.simple("&fUsage: "),
                 ChatUtils.command("&b/skywars help", "/skywars help", "Click to execute command"),
-                ChatUtils.simple("&8 - &eTo view more available commands!")
+                ChatUtils.simple("&8 - &eTo view more available &bSkywars&e commands!")
         );
         sender.sendMessage("");
     }

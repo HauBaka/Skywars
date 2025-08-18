@@ -9,10 +9,12 @@ import com.HauBaka.world.WorldManager;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 
 import java.util.List;
+import java.util.Map;
 
 public class Arena {
     @Getter
@@ -22,7 +24,17 @@ public class Arena {
     @Getter
     private List<GamePlayer> players;
     @Getter
+    private List<GamePlayer> alive_players;
+    @Getter
+    private List<GamePlayer> spectators;
+    @Getter
+    private Map<GamePlayer, Integer> kills;
+    @Getter
+    private Map<GamePlayer, Integer> assists;
+    @Getter
     private List<ArenaTeam> teams;
+    @Getter
+    private List<ArenaTeam> alive_teams;
     @Getter
     private final String name;
     @Getter
@@ -37,12 +49,15 @@ public class Arena {
     private List<ArenaChest> midChests;
     @Getter @Setter
     private Location lobby;
-
+    @Getter @Setter
+    private int time;
     public Arena(TemplateArena templateArena, ArenaVariant variant) {
         this.variant = variant;
         this.name = templateArena.getName();
         this.id = ArenaManager.generateID();
         this.templateArena = templateArena;
+        this.countDownTask = new ArenaCountdownTask(this);
+        this.state = ArenaState.LOADING;
         create();
     }
 
@@ -50,19 +65,24 @@ public class Arena {
         WorldManager.cloneWorld(templateArena.getMapName(), ArenaManager.generateID(), w -> {
             this.world = w;
             templateArena.setUp(this);
+            setState(ArenaState.AVAILABLE);
         });
     }
 
     public boolean addPlayer(GamePlayer gamePlayer) {
         if (!(state == ArenaState.AVAILABLE || state == ArenaState.WAITING || state == ArenaState.STARTING) ||
-                players.size() == variant.getMode().getAmountPlayer() ||
+                players.size() == variant.getMode().getMaxPlayer() ||
                 players.contains(gamePlayer)
         ) return false;
 
         for (ArenaTeam team : teams) {
             if (team.addPlayer(gamePlayer)) {
                 players.add(gamePlayer);
+
                 if (state == ArenaState.AVAILABLE) setState(ArenaState.WAITING);
+                if (players.size() == variant.getMode().getMinPlayer() && state == ArenaState.WAITING) {
+                    setState(ArenaState.STARTING);
+                }
                 return true;
             }
         }
@@ -81,6 +101,9 @@ public class Arena {
             countDownTask.waiting();
         } else if (this.state == ArenaState.STARTING) {
             countDownTask.starting();
+        } else if (this.state == ArenaState.CAGE_OPENING) {
+              removeLobby();
+              countDownTask.cage_opening();
         } else if (this.state == ArenaState.PHASE_1) {
             countDownTask.phase_1();
         } else if (this.state == ArenaState.PHASE_2) {
@@ -99,8 +122,14 @@ public class Arena {
 
     }
     public void broadcast(String s) {
+        if (s == null) return;
+        s = ChatColor.translateAlternateColorCodes('&', s);
         for (GamePlayer gamePlayer : players) {
             gamePlayer.getPlayer().sendMessage(s);
         }
+    }
+
+    private void removeLobby() {
+
     }
 }

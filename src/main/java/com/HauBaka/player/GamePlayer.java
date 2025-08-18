@@ -1,7 +1,10 @@
 package com.HauBaka.player;
 
 import com.HauBaka.object.GameScoreboard;
+import com.HauBaka.object.cage.Cage;
+import com.HauBaka.object.cage.CageManager;
 import com.HauBaka.utils.ChatUtils;
+import com.sun.istack.internal.NotNull;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -17,11 +20,14 @@ public class GamePlayer {
     private Player player;
     @Getter
     private GameScoreboard scoreboard;
+    @Getter
+    private Cage selectedCage;
     private GamePlayer(Player player) {
         this.player = player;
-        scoreboard = new GameScoreboard(this);
+        this.selectedCage = CageManager.getCage("default");
+        this.scoreboard = new GameScoreboard(this);
         //Test
-        scoreboard.setContents(Arrays.asList(
+        this.scoreboard.setContents(Arrays.asList(
                 "§4♥ §cRed Love §4♥",
                 "§6★ §eGolden Star §6★",
                 "§2✔ §aGreen Check §2✔",
@@ -33,7 +39,7 @@ public class GamePlayer {
                 "§8Shadow Text",
                 "§e§nYellow Underline"
         ));
-        scoreboard.show();
+        this.scoreboard.show();
     }
     public static void init() {
         gamePlayers = new HashMap<>();

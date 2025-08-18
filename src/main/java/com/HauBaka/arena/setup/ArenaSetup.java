@@ -459,6 +459,12 @@ public class ArenaSetup {
         FileConfig fileConfig = new FileConfig("maps/" + getMapName() + ".yml", true);
         fileConfig.addDefault("name",Utils.toBetterName(getMapName()));
 
+        if (lobby != null) {
+            fileConfig.getConfig().set("lobby.x", lobby.getX());
+            fileConfig.getConfig().set("lobby.y", lobby.getY());
+            fileConfig.getConfig().set("lobby.z", lobby.getZ());
+        }
+
         List<Map<String, Object>> spawnsData = new ArrayList<>();
         for (int i = 1; i <= MAX_SPAWNS; ++i) {
             Map<String, Object> spawnData = new HashMap<>();
@@ -492,11 +498,6 @@ public class ArenaSetup {
             midChestsData.add(midChestData);
         }
 
-        if (lobby != null) {
-            fileConfig.getConfig().set("lobby.x", lobby.getX());
-            fileConfig.getConfig().set("lobby.y", lobby.getY());
-            fileConfig.getConfig().set("lobby.z", lobby.getZ());
-        }
         fileConfig.getConfig().set("spawns", spawnsData);
         fileConfig.getConfig().set("midChests", midChestsData);
 

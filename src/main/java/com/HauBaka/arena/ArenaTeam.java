@@ -1,7 +1,9 @@
 package com.HauBaka.arena;
 
+import com.HauBaka.Skywars;
 import com.HauBaka.enums.ArenaState;
 import com.HauBaka.object.ArenaChest;
+import com.HauBaka.object.cage.CageManager;
 import com.HauBaka.player.GamePlayer;
 import lombok.Getter;
 import org.bukkit.Location;
@@ -27,14 +29,15 @@ public class ArenaTeam {
     //TODO: implement here!
     public boolean addPlayer(GamePlayer player) {
         if (members.contains(player) || members.size() == arena.getVariant().getMode().getPlayerPerTeam()) return false;
+        if (Skywars.getInstance().getConfig().getConfig().getBoolean("waiting_lobby")) {
+            if (arena.getLobby() == null) return false;
+            player.getPlayer().teleport(arena.getLobby());
+        }
 
         members.add(player);
         player.getPlayer().teleport(spawnLocation);
         arena.broadcast(player.getPlayer().getName() + " joined the game!");
 
-        if (arena.getPlayers().size() == arena.getVariant().getMode().getMinPlayer() && arena.getState() == ArenaState.WAITING) {
-            arena.setState(ArenaState.STARTING);
-        }
         return true;
     }
     public boolean removePlayer(GamePlayer player) {
@@ -53,5 +56,16 @@ public class ArenaTeam {
         }
     }
 
+    public void addCage() {
+        if (members.isEmpty()) return;
+        members.get(0).getSelectedCage().place(spawnLocation);
+        for (GamePlayer member : members) {
+            member.getPlayer().teleport(spawnLocation);
+        }
+    }
+    public void removeCage() {
+        if (members.isEmpty()) CageManager.getCage("default").remove(spawnLocation);
+        members.get(0).getSelectedCage().remove(spawnLocation);
+    }
 
 }

@@ -1,0 +1,25 @@
+##############################################################
+# This is a studying project.                                #
+# The configuration is simplified for learning purposes.     #
+# If you want deeper or more advanced configuration,         #
+# feel free to clone the project and modify it yourself.     #
+#                                                            #
+# Project: https://github.com/HauBaka/Skywars                #
+##############################################################
+
+
+###############################################################
+# This reduces lag caused by players when they join a game.   #
+# It works by unifying all players in a waiting lobby until   #
+# the game starts, instead of constantly retrieving data or   #
+# updating the arena whenever someone joins or quits.         #
+#                                                             #
+# Waiting lobbies are based on the Hypixel model. Once the    #
+# game starts, the waiting lobby will be removed, following   #
+# the same size/scale as Hypixel’s waiting lobby system.      #
+#                                                             #
+# Note: Waiting lobbies are not built using schematics or     #
+# similar methods — they must already exist inside the map.   #
+# Maps: https://shorturl.at/1FlFb                             #
+###############################################################
+waiting_lobby: true

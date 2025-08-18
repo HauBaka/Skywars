@@ -2,12 +2,10 @@ package com.HauBaka.command;
 
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.*;
-import com.HauBaka.arena.setup.ArenaSetup;
 import com.HauBaka.arena.setup.ArenaSetupManager;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.world.WorldManager;
 import org.bukkit.ChatColor;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 @CommandAlias("sw|skywars")

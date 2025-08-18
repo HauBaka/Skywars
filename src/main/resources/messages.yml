@@ -10,3 +10,5 @@ arena:
   start-countdown: "&a&lSTARTING! &eThis game starts in %time%&e second!"
   countdown-seconds: "&eThe game starts in %time%&e seconds!"
   countdown-second: "&eThe game starts in %time%&e second!"
+  cage_opening-seconds: "&eCages open in:&c %time%&e seconds!"
+  cage_opening-second: "&eCages open in:&c %time%&e second!"
