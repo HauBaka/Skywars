@@ -107,21 +107,13 @@ public class WorldManager  {
     /***
      * Hàm xóa thế giới đã tạo
      @param worldName : tên của thế giới cần phải xóa
-     @param returnLocation : Vị trí để dịch chuyển các người chơi trong thế giới 'worldName' đến.
      ***/
-    public static void removeWorld(String worldName, Location returnLocation) {
+    public static void removeWorld(String worldName) {
 
         World removeW = Bukkit.getWorld(worldName);
         if (worldName == null || removeW == null || !(createdWorlds.contains(worldName))) {
             Bukkit.getLogger().warning("World " + worldName + " does not exist");
             return;
-        }
-        if (returnLocation != null) {
-            Bukkit.getScheduler().runTask(Skywars.getInstance(), ()-> {
-                for (Player player : removeW.getPlayers()) {
-                    player.teleport(returnLocation);
-                }
-            });
         }
         Bukkit.unloadWorld(removeW, true);
         createdWorlds.remove(worldName);

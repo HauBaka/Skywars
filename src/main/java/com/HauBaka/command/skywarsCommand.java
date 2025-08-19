@@ -1,20 +1,44 @@
 package com.HauBaka.command;
 
 import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.CommandAlias;
-import co.aikar.commands.annotation.HelpCommand;
-import co.aikar.commands.annotation.Subcommand;
+import co.aikar.commands.annotation.*;
+import com.HauBaka.arena.Arena;
+import com.HauBaka.arena.ArenaManager;
+import com.HauBaka.player.GamePlayer;
 import com.HauBaka.utils.ChatUtils;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+
+import java.util.Arrays;
+import java.util.List;
 
 @CommandAlias("sw|skywars")
+@Description("Available commands for skywars")
 public class skywarsCommand extends BaseCommand {
-    @HelpCommand
-    public static void onHelp(Player player) {
-        //soon
+    private static class CMD {
+        String command, label, description;
+        private CMD(String command, String label, String description) {
+            this.command = command;
+            this.label = label;
+            this.description = description;
+        }
     }
-    @Subcommand("author|detail")
+    private static final List<CMD> cmds = Arrays.asList(
+            new CMD("/sw detail", "/skywars detail", "View more about this plugin"),
+            new CMD("/sw help", "/sw help", "View available commands"),
+            new CMD("/sw join ", "/sw join <arena>", "Join a SkyWars arena"),
+            new CMD("/sw leave", "/sw leave", "Leave current arena")
+    );
+
+    @HelpCommand
+    public static void onHelp(CommandSender sender) {
+        for (CMD cmd : cmds) {
+            ChatUtils.sendComplexMessage(sender,
+                    ChatUtils.suggest("&b" + cmd.label, cmd.command,"&eClick to execute!"),
+                    ChatUtils.simple(" &8- &e" + cmd.description)
+            );
+        }
+    }
+    @Subcommand("author|detail|details")
     public static void onDetail(CommandSender sender) {
         sender.sendMessage("");
         sender.sendMessage("");
@@ -62,5 +86,18 @@ public class skywarsCommand extends BaseCommand {
         );
         sender.sendMessage("");
     }
-
+    @Subcommand("join")
+    @Syntax("<+tag> <arenaID>")
+    @Description("Join a arena.")
+    public static void onJoin(GamePlayer gamePlayer, String id) {
+        Arena arena = ArenaManager.getByID(id);
+        if (arena == null) {
+            gamePlayer.sendMessage("&4&lERROR!&r&c No arena found!");
+            return;
+        }
+        if (!arena.addPlayer(gamePlayer)) {
+            gamePlayer.sendMessage("&4&lERROR!&r&c Can't join this arena!");
+            return;
+        }
+    }
 }

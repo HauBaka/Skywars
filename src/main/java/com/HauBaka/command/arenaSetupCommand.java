@@ -20,7 +20,12 @@ public class arenaSetupCommand extends BaseCommand {
     @CommandPermission("skywars.admin")
     public static void onSetUp(Player player, String worldName) {
         if (!WorldManager.checkExistWorldName(worldName)) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&4&lERROR!&r&c " + worldName +".slime file does not exist!"));
+            player.sendMessage(
+                    ChatColor.translateAlternateColorCodes(
+                            '&',
+                            "&4&lERROR!&r&c " + worldName +".slime file does not exist!"
+                    )
+            );
             return;
         }
         ArenaSetupManager.createEdit(worldName, GamePlayer.getGamePlayer(player));

@@ -26,11 +26,17 @@ public class ArenaManager {
     public static String generateID() {
         String id = "";
         while (id.isEmpty() || arenaList.containsKey(id)) {
-            id = "mini" + Utils.generateID(4);
+            id = "m" + Utils.generateID(4);
         }
         return id;
     }
 
+    public static Arena getByID(String id) {
+        for (Arena arena : arenaList.values())
+            if (arena.getId().equalsIgnoreCase(id))
+                return arena;
+        return null;
+    }
     public static List<Arena> getByVariant(ArenaVariant variant) {
         List<Arena> list = new ArrayList<>();
         for (Arena arena : arenaList.values()) {
@@ -50,5 +56,7 @@ public class ArenaManager {
         }
         return list;
     }
-
+    public static void removeArena(String id) {
+        arenaList.remove(id);
+    }
 }

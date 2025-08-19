@@ -4,21 +4,22 @@ import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.HelpCommand;
 import co.aikar.commands.annotation.Subcommand;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-@CommandAlias("help")
+@CommandAlias("test")
 public class testCommand extends BaseCommand {
     @HelpCommand
     public void onHelp(CommandSender sender) {
         sender.sendMessage("stfu");
     }
 
-    @Subcommand("empty")
-    public void onEmpty() {}
-
-    @Subcommand("sw")
+    @Subcommand("removeLobby")
     public void helpSw(Player sender) {
-        sender.sendMessage("test");
+        Location loc = sender.getLocation();
+        //removeLobby(loc);
     }
+
+
 }

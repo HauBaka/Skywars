@@ -1,5 +1,6 @@
 package com.HauBaka.enums;
 
+import com.HauBaka.utils.Utils;
 import lombok.Getter;
 
 public class ArenaVariant {
@@ -21,15 +22,25 @@ public class ArenaVariant {
         }
     }
     public enum Type {
-        NORMAL,
-        INSANE
+        NORMAL("§a"),
+        INSANE("§c");
+
+        @Getter
+        private final String color;
+        Type(String color) {
+            this.color = color;
+        }
+        @Override
+        public String toString() {
+            return this.color + Utils.toBetterName(name());
+        }
     }
     @Getter
     private final Mode mode;
     @Getter
     private final Type type;
 
-    ArenaVariant(Mode mode, Type type) {
+    public ArenaVariant(Mode mode, Type type) {
         this.mode = mode;
         this.type = type;
     }

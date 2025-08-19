@@ -1,11 +1,11 @@
 package com.HauBaka.player;
 
+import com.HauBaka.arena.Arena;
 import com.HauBaka.object.GameScoreboard;
 import com.HauBaka.object.cage.Cage;
 import com.HauBaka.object.cage.CageManager;
-import com.HauBaka.utils.ChatUtils;
-import com.sun.istack.internal.NotNull;
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -17,11 +17,13 @@ import java.util.Map;
 public class GamePlayer {
     private static Map<Player, GamePlayer> gamePlayers;
     @Getter
-    private Player player;
+    private final Player player;
     @Getter
-    private GameScoreboard scoreboard;
+    private final GameScoreboard scoreboard;
     @Getter
     private Cage selectedCage;
+    @Getter @Setter
+    private Arena arena;
     private GamePlayer(Player player) {
         this.player = player;
         this.selectedCage = CageManager.getCage("default");
@@ -50,6 +52,9 @@ public class GamePlayer {
         GamePlayer gamePlayer = new GamePlayer(player);
         gamePlayers.put(player, gamePlayer);
         return gamePlayer;
+    }
+    public static GamePlayer get(Player player) {
+        return gamePlayers.computeIfAbsent(player, GamePlayer::new);
     }
     public void sendMessage(String message) {
         if (player != null && player.isOnline()) {

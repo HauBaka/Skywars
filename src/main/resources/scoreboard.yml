@@ -21,7 +21,7 @@ ingame_solo:
   - "Kills: &a%kills%"
   - ""
   - "Map: %map_colored_name%"
-  - "Mode: &a%mode_colored_name%"
+  - "Mode: %mode_colored_name%"
   - ""
   - "&ewww.yourserver.net"
 ingame_double:
@@ -37,7 +37,7 @@ ingame_double:
   - "Assists: &a%assists%"
   - ""
   - "Map: %map_colored_name%"
-  - "Mode: &a%mode_colored_name%"
+  - "Mode: %mode_colored_name%"
   - ""
   - "&ewww.yourserver.net"
 ingame_mega:
@@ -53,6 +53,6 @@ ingame_mega:
   - "Assists: &a%assists%"
   - ""
   - "Map: %map_colored_name%"
-  - "Mode: &a%mode_colored_name%"
+  - "Mode: %mode_colored_name%"
   - ""
   - "&ewww.yourserver.net"

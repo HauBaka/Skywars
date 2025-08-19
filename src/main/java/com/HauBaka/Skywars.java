@@ -1,12 +1,15 @@
 package com.HauBaka;
 
 import co.aikar.commands.PaperCommandManager;
+import co.aikar.commands.contexts.ContextResolver;
 import com.HauBaka.arena.ArenaManager;
 import com.HauBaka.arena.setup.ArenaSetupManager;
+import com.HauBaka.command.adminCommand;
 import com.HauBaka.command.arenaSetupCommand;
 import com.HauBaka.command.skywarsCommand;
 import com.HauBaka.command.testCommand;
 import com.HauBaka.file.FileConfig;
+import com.HauBaka.handle.blockBreak;
 import com.HauBaka.object.cage.CageManager;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.world.WorldManager;
@@ -14,6 +17,7 @@ import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -24,7 +28,7 @@ public class Skywars extends JavaPlugin {
     @Getter
     private FileConfig messageConfig;
     @Getter
-    private FileConfig config;
+    private static FileConfig configConfig;
     @Getter
     private static Skywars instance;
 
@@ -40,15 +44,15 @@ public class Skywars extends JavaPlugin {
         GamePlayer.init();
         this.messageConfig = new FileConfig("messages.yml");
         this.messageConfig.saveDefaultConfig();
-        this.config = new FileConfig("config.yml");
-        this.config.saveDefaultConfig();
+        configConfig = new FileConfig("config.yml");
+        configConfig.saveDefaultConfig();
         registerCommands();
         registerEvents();
     }
 
     private void registerEvents() {
         PluginManager pm = Bukkit.getPluginManager();
-        //pm.registerEvents(new ArenaListener(), this);
+        pm.registerEvents(new blockBreak(), this);
 
     }
 
@@ -59,8 +63,15 @@ public class Skywars extends JavaPlugin {
 
     private void registerCommands() {
         PaperCommandManager manager = new PaperCommandManager(this);
+
+        manager.getCommandContexts().registerContext(GamePlayer.class, c ->
+                GamePlayer.get(c.getPlayer())
+        );
+
+
         manager.registerCommand(new testCommand());
         manager.registerCommand(new skywarsCommand());
         manager.registerCommand(new arenaSetupCommand());
+        manager.registerCommand(new adminCommand());
     }
 }

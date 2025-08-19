@@ -55,13 +55,17 @@ public class TemplateArena {
     @Getter
     private List<TemplateLocation> midChests;
     private final FileConfig fileConfig;
+    @Getter
+    private boolean isValid;
     public TemplateArena(String mapName) {
         this.mapName = mapName;
         this.name = Utils.toBetterName(mapName);
         fileConfig = new FileConfig("/maps/" + mapName +".yml");
+        isValid = fileConfig.getFile().exists();
         load();
     }
     private void load() {
+        if (!isValid) return;
         this.name = fileConfig.getConfig().getString("name", Utils.toBetterName(mapName));
 
         // Load spawns + spawnChests

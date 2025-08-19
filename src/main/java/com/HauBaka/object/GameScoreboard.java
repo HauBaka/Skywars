@@ -1,9 +1,16 @@
 package com.HauBaka.object;
 
+import com.HauBaka.arena.Arena;
+import com.HauBaka.arena.ArenaTeam;
+import com.HauBaka.arena.ScoreboardData;
+import com.HauBaka.enums.ArenaState;
+import com.HauBaka.enums.ScoreboardVariable;
 import com.HauBaka.player.GamePlayer;
+import com.HauBaka.utils.Utils;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.*;
 
@@ -169,4 +176,117 @@ public class GameScoreboard {
         }
         return arr;
     }
+
+    public void setArena(Arena arena, ArenaTeam myTeam) {
+        World arenaWorld = arena.getWorld();
+
+        Objective healthUnder = scoreboard.getObjective("health_under");
+        if (healthUnder == null) {
+            healthUnder = scoreboard.registerNewObjective("health_under", "health");
+            healthUnder.setDisplaySlot(DisplaySlot.BELOW_NAME);
+            healthUnder.setDisplayName("§c❤");
+        }
+
+        Objective healthTab = scoreboard.getObjective("health_tablist");
+        if (healthTab == null) {
+            healthTab = scoreboard.registerNewObjective("health_tablist", "dummy");
+            healthTab.setDisplaySlot(DisplaySlot.PLAYER_LIST);
+            healthTab.setDisplayName("HP");
+        }
+
+        for (Team oldTeam : new ArrayList<>(scoreboard.getTeams())) {
+            try { oldTeam.unregister(); } catch (Exception ignored) {}
+        }
+
+        for (ArenaTeam team : arena.getTeams()) {
+            String teamName = team.equals(myTeam) ? "000_" + team.getName() : team.getName();
+            Team sbTeam = scoreboard.getTeam(teamName);
+            if (sbTeam == null) sbTeam = scoreboard.registerNewTeam(teamName);
+
+            sbTeam.setPrefix((team.equals(myTeam) ? "§a" : "§c") + "[" + team.getName() + "] ");
+            for (GamePlayer gp : team.getMembers()) {
+                Player p = gp.getPlayer();
+                if (p == null || !p.isOnline()) continue;
+                if (!arena.getAlive_players().contains(gp)) continue;
+                if (!p.getWorld().equals(arenaWorld)) continue;
+
+                sbTeam.addEntry(p.getName());
+                Score score = healthTab.getScore(p.getName());
+                score.setScore((int) p.getHealth());
+            }
+        }
+
+        Team spectator = scoreboard.getTeam("zzz_spectator");
+        if (spectator == null) spectator = scoreboard.registerNewTeam("zzz_spectator");
+        spectator.setPrefix("§7[SPEC] ");
+
+        for (GamePlayer spec : arena.getSpectators()) {
+            Player p = spec.getPlayer();
+            if (p == null || !p.isOnline()) continue;
+            if (!p.getWorld().equals(arenaWorld)) continue;
+
+            spectator.addEntry(p.getName());
+        }
+    }
+    public void removeArena() {
+        Objective healthUnder = scoreboard.getObjective("health_under");
+        if (healthUnder != null) {
+            try { healthUnder.unregister(); } catch (Exception ignored) {}
+        }
+
+        Objective healthTab = scoreboard.getObjective("health_tablist");
+        if (healthTab != null) {
+            try { healthTab.unregister(); } catch (Exception ignored) {}
+        }
+
+        for (Team t : new ArrayList<>(scoreboard.getTeams())) {
+            try { t.unregister(); } catch (Exception ignored) {}
+        }
+
+    }
+    public void setSpectator() {
+        Arena arena = gamePlayer.getArena();
+        if (arena == null) return;
+
+        Team spectator = scoreboard.getTeam("zzz_spectator");
+        if (spectator == null) {
+            spectator = scoreboard.registerNewTeam("zzz_spectator");
+            spectator.setPrefix("§7[SPEC] ");
+        }
+        spectator.addEntry(gamePlayer.getPlayer().getName());
+
+        Objective healthUnder = scoreboard.getObjective("health_under");
+        if (healthUnder != null) healthUnder.getScoreboard().resetScores(gamePlayer.getPlayer().getName());
+
+        Objective healthTab = scoreboard.getObjective("health_tablist");
+        if (healthTab != null) healthTab.getScoreboard().resetScores(gamePlayer.getPlayer().getName());
+    }
+
+    public void addToTablist(GamePlayer gp, ArenaTeam team, boolean isMyTeam) {
+        String teamName = isMyTeam ? "000_" + team.getName() : team.getName();
+        Team sbTeam = scoreboard.getTeam(teamName);
+        if (sbTeam == null) {
+            sbTeam = scoreboard.registerNewTeam(teamName);
+            sbTeam.setPrefix((isMyTeam ? "§a" : "§c") + "[" + team.getName() + "] ");
+        }
+        sbTeam.addEntry(gp.getPlayer().getName());
+
+        Objective healthTab = scoreboard.getObjective("health_tablist");
+        if (healthTab != null) {
+            Score score = healthTab.getScore(gp.getPlayer().getName());
+            score.setScore((int) gp.getPlayer().getHealth());
+        }
+    }
+    public void removeFromTablist(GamePlayer gp) {
+        for (Team t : scoreboard.getTeams()) {
+            if (t.hasEntry(gp.getPlayer().getName())) {
+                t.removeEntry(gp.getPlayer().getName());
+            }
+        }
+        Objective healthTab = scoreboard.getObjective("health_tablist");
+        if (healthTab != null) {
+            healthTab.getScoreboard().resetScores(gp.getPlayer().getName());
+        }
+    }
+
 }

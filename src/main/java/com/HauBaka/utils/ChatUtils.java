@@ -63,4 +63,18 @@ public class ChatUtils {
 
         return comp;
     }
+    public static TextComponent suggest(String text, String value, String hoverText) {
+        text = ChatColor.translateAlternateColorCodes('&', text);
+        TextComponent comp = simple(text);
+        comp.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, value));
+
+        if (hoverText != null) {
+            hoverText = ChatColor.translateAlternateColorCodes('&', hoverText);
+            comp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    new ComponentBuilder(hoverText).create()));
+        }
+
+        return comp;
+    }
+
 }

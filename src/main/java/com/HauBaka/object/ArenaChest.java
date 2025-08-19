@@ -6,15 +6,18 @@ import com.HauBaka.enums.ArenaState;
 import com.HauBaka.enums.ArenaVariant;
 import com.HauBaka.file.FileConfig;
 import lombok.Getter;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 
-public class ArenaChest {
+public class ArenaChest implements Listener {
     // state(phase_1,2...) -> type(normal/insane) -> chestType(spawn/mid) -> list item
     private static Map<ArenaState, Map<ArenaVariant.Type, Map<String, List<ChestItem>>>> chestItems;
 
@@ -22,11 +25,12 @@ public class ArenaChest {
     @Getter
     private final Location location;
     @Getter
-    private Hologram hologram;
+    private final Hologram hologram;
 
     public ArenaChest(Arena arena, Location location) {
         this.arena = arena;
         this.location = location;
+        this.hologram = new Hologram(location);
     }
     public Chest getChest() {
         if (location.getBlock().getType() != Material.CHEST) {
@@ -151,5 +155,10 @@ public class ArenaChest {
         }
 
         return result;
+    }
+
+    public void destroy() {
+        HandlerList.unregisterAll(this);
+        hologram.destroy();
     }
 }
