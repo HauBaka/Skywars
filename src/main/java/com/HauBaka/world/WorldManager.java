@@ -124,7 +124,7 @@ public class WorldManager  {
      */
     public static void removeAllCreatedWorlds() {
         for (String worldName : createdWorlds) {
-            removeWorld(worldName, null);
+            removeWorld(worldName);
         }
     }
 }

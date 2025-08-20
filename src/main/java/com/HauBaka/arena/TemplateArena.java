@@ -125,7 +125,7 @@ public class TemplateArena {
             for (TemplateLocation chestTemplateLocation : spawnChests.get(i)) {
                 Location chestSpawn = new Location(arena.getWorld(),
                         chestTemplateLocation.getX(), chestTemplateLocation.getY(), chestTemplateLocation.getZ());
-                ArenaChest arenaChest = new ArenaChest(arena, chestSpawn);
+                ArenaChest arenaChest = new ArenaChest(arena, chestSpawn, ArenaSetupStage.SPAWN);
                 arenaTeam.getSpawnChests().add(arenaChest);
             }
 
@@ -135,7 +135,7 @@ public class TemplateArena {
         for (TemplateLocation midTemplateLocation : midChests) {
             Location chestSpawn = new Location(arena.getWorld(),
                     midTemplateLocation.getX(), midTemplateLocation.getY(), midTemplateLocation.getZ());
-            ArenaChest arenaChest = new ArenaChest(arena, chestSpawn);
+            ArenaChest arenaChest = new ArenaChest(arena, chestSpawn, ArenaSetupStage.MID);
             arena.getMidChests().add(arenaChest);
         }
     }

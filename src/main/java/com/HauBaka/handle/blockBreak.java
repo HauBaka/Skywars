@@ -16,7 +16,7 @@ public class blockBreak implements Listener {
                         arena.getState() == ArenaState.STARTING ||
                         arena.getState() == ArenaState.CAGE_OPENING ||
                         arena.getState() == ArenaState.ENDING ||
-                        arena.getState() == ArenaState.TO_HUB
+                        arena.getState() == ArenaState.CLOSED
         ) event.getParentEvent().setCancelled(true);
     }
 }

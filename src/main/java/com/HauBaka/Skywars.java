@@ -10,6 +10,8 @@ import com.HauBaka.command.skywarsCommand;
 import com.HauBaka.command.testCommand;
 import com.HauBaka.file.FileConfig;
 import com.HauBaka.handle.blockBreak;
+import com.HauBaka.handle.chestHandle;
+import com.HauBaka.handle.stageChangeHandle;
 import com.HauBaka.object.cage.CageManager;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.world.WorldManager;
@@ -53,6 +55,8 @@ public class Skywars extends JavaPlugin {
     private void registerEvents() {
         PluginManager pm = Bukkit.getPluginManager();
         pm.registerEvents(new blockBreak(), this);
+        pm.registerEvents(new chestHandle(), this);
+        pm.registerEvents(new stageChangeHandle(), this);
 
     }
 

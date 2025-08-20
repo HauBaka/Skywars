@@ -2,17 +2,17 @@ package com.HauBaka.arena;
 
 import com.HauBaka.Skywars;
 import com.HauBaka.enums.ArenaState;
-import com.HauBaka.enums.ArenaVariant;
 import com.HauBaka.enums.ScoreboardVariable;
+import com.HauBaka.object.ArenaChest;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.utils.Utils;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class ArenaCountdownTask {
     private int taskID;
@@ -20,122 +20,77 @@ public class ArenaCountdownTask {
     ArenaCountdownTask(Arena arena) {
         this.arena = arena;
     }
-    public void cancelTask() {
-        Bukkit.getScheduler().cancelTask(taskID);
-    }
-    public void waiting() {
-    }
-    private void countdown() {
-        arena.setTime(arena.getTime() - 1);
-    }
-    //TODO: Update scoreboard
+    public void cancelTask() { Bukkit.getScheduler().cancelTask(taskID); }
+    private void countdown() { arena.setTime(arena.getTime() - 1);}
     public void starting() {
-        String message = ChatColor.translateAlternateColorCodes(
-                '&',
-                Skywars.getInstance().getMessageConfig().getConfig().getString("arena.start-countdown"));
-        String msgSeconds = ChatColor.translateAlternateColorCodes(
-                '&',
-                Skywars.getInstance().getMessageConfig().getConfig().getString("arena.countdown-seconds"));
-        String msgSecond = ChatColor.translateAlternateColorCodes(
-                '&',
-                Skywars.getInstance().getMessageConfig().getConfig().getString("arena.countdown-second"));
+        String message = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.start-countdown");
+        String msgSeconds = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.countdown-seconds");
+        String msgSecond = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.countdown-second");
 
         arena.broadcast(message.replace ("%time%", "§a" + arena.getTime()));
-        taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skywars.getInstance(),
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        updateTimerScoreboard();
-                        int time = arena.getTime();
-                        if (time == 10) {
-                            arena.broadcast(msgSeconds.replace("%time%", "§6" + time));
-                        } else if (time <= 5 && time > 1) {
-                            arena.broadcast(msgSeconds.replace("%time%", "§c" + time));
-                        } else if (time == 1) {
-                            arena.broadcast(msgSecond.replace("%time%", "§c" + time));
-                        } else if (time <= 0) {
-                            arena.removeLobby();
-                            arena.setState(
-                                    Skywars.getConfigConfig().getConfig().getBoolean("waiting_lobby") ?
-                                            ArenaState.CAGE_OPENING : ArenaState.PHASE_1
-                            );
-                        }
-                        countdown();
-                    }
-                }, 0L, 20L);
+
+        doTimerLoop(o -> {
+            int time = arena.getTime();
+            if (time == 10)  arena.broadcast(msgSeconds.replace("%time%", "§6" + time));
+            else if (time <= 5 && time > 1) arena.broadcast(msgSeconds.replace("%time%", "§c" + time));
+            else if (time == 1) arena.broadcast(msgSecond.replace("%time%", "§c" + time));
+            else if (time <= 0) {
+                arena.removeLobby();
+                arena.setState(
+                        Skywars.getConfigConfig().getConfig().getBoolean("waiting_lobby") ?
+                                ArenaState.CAGE_OPENING : ArenaState.PHASE_1
+                );
+            }
+        });
     }
     public void cage_opening() {
         for (ArenaTeam team : arena.getTeams()) {
             team.joinCage();
         }
         updateScoreboard();
-        taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skywars.getInstance(),
-                new Runnable() {
-                    String message = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.cage_opening-seconds");
-                    @Override
-                    public void run() {
-                        updateTimerScoreboard();
-                        int time = arena.getTime();
-                        if (time == 10)  arena.broadcast(
-                                message.replace("%time%", "§6" + time)
-                                        .replace("&", "§")
-                        );
-                        else if (time < 5 && time > 1)  arena.broadcast(
-                                message.replace("%time%", "§c" + time)
-                                        .replace("&", "§")
-                        );
-                        else if (time == 1) {
-                            message = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.cage_opening-second");
-                            arena.broadcast(
-                                    message.replace("%time%", "§c" + time)
-                                            .replace("&", "§")
-                            );
-                        }
-                        else if (time <= 0) {
-                            arena.setState(ArenaState.PHASE_1);
-                        }
-                        countdown();
-                    }
-                }, 0L, 20L);
+        String msg_seconds = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.cage_opening-seconds");
+        String msg_second = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.cage_opening-second");
+        doTimerLoop(o-> {
+            int time = arena.getTime();
+            if (time == 10)  arena.broadcast(msg_seconds.replace("%time%", "§6" + time));
+            else if (time < 5 && time > 1)  arena.broadcast(msg_seconds.replace("%time%", "§c" + time));
+            else if (time == 1) arena.broadcast(msg_second.replace("%time%", "§c" + time));
+        });
     }
 
-    public void phase_1() {
-        arena.refill();
-        for (ArenaTeam team : arena.getTeams())
-            team.removeCage();
-        ingame_timer();
-
-    }
-    public void phase_2() {
-        arena.refill();
-        ingame_timer();
-    }
-    public void phase_3() {
-        arena.refill();
-        ingame_timer();
-    }
-
-    public void doom() {
-        arena.refill();
-        ingame_timer();
-    }
-
-    public void ending() {
-
-    }
-
-    private void ingame_timer() {
+    public void doTimerLoop(Consumer<Object> consumer) {
+        cancelTask();
         taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skywars.getInstance(),
                 new Runnable() {
                     @Override
                     public void run() {
                         int time = arena.getTime();
                         updateTimerScoreboard();
+                        updateChests();
+                        consumer.accept(null);
                         if (time == 0)
                             arena.setState(arena.getState().getNext());
                         countdown();
                     }
                 }, 0L, 20L);
+    }
+    public void updateChests() {
+        if (arena.getState() == ArenaState.AVAILABLE
+                || arena.getState() == ArenaState.WAITING
+                || arena.getState() == ArenaState.STARTING
+                || arena.getState() == ArenaState.CAGE_OPENING) return;
+        String time = "&a" + Utils.secondsToTime(arena.getTime());
+        for (ArenaTeam team : arena.getTeams()) {
+            for (ArenaChest chest : team.getSpawnChests()) {
+                if (chest.isOpened()) {
+                    chest.getHologram().setLine(0, time);
+                }
+            }
+        }
+        for (ArenaChest chest : arena.getMidChests())
+            if (chest.isOpened()) {
+                chest.getHologram().setLine(0, time);
+            }
     }
     private void updateTimerScoreboard() {
         Object o;
@@ -159,7 +114,7 @@ public class ArenaCountdownTask {
         }
         o =  arena.getVariant().getMode();
 
-        lines = ScoreboardData.getScoreboard(o);
+        lines = new ArrayList<>(ScoreboardData.getScoreboard(o));
         int idx_timer = ScoreboardData.getIndex(o, ScoreboardVariable.TIMER);
         int idx_next_event = ScoreboardData.getIndex(o, ScoreboardVariable.NEXT_EVENT_NAME);
 
@@ -184,9 +139,10 @@ public class ArenaCountdownTask {
                     arena.getState() == ArenaState.STARTING) ?
                 ArenaState.WAITING : arena.getVariant().getMode();
         int idx = ScoreboardData.getIndex(o, variable);
-        String line = ScoreboardData.getScoreboard(o).get(idx).replace(variable.getPlaceholder(), String.valueOf(value));
+        List<String> lines =  ScoreboardData.getScoreboard(o);
+        String line = lines.get(idx).replace(variable.getPlaceholder(), String.valueOf(value));
 
-        gamePlayer.getScoreboard().setLine(idx, line);
+        gamePlayer.getScoreboard().setLine(lines.size() - idx - 1, line);
     }
     public void updateScoreboard() {
         List<String> contents;
@@ -198,7 +154,7 @@ public class ArenaCountdownTask {
         data.put(ScoreboardVariable.MODE_COLORED_NAME, arena.getVariant().getType().toString());
 
         if (arena.getState() == ArenaState.AVAILABLE || arena.getState() == ArenaState.WAITING || arena.getState() == ArenaState.STARTING) {
-            contents = ScoreboardData.getScoreboard(ArenaState.WAITING);
+            contents = new ArrayList<>(ScoreboardData.getScoreboard(ArenaState.WAITING));
 
             data.put(ScoreboardVariable.GAME_PLAYERS, arena.getPlayers().size());
             data.put(ScoreboardVariable.GAME_MAX_PLAYERS, arena.getVariant().getMode().getMaxPlayer());
@@ -215,7 +171,7 @@ public class ArenaCountdownTask {
             }
             return;
         }
-        contents = ScoreboardData.getScoreboard(arena.getVariant().getMode());
+        contents = new ArrayList<>(ScoreboardData.getScoreboard(arena.getVariant().getMode()));
 
         data.put(ScoreboardVariable.NEXT_EVENT_NAME, arena.getState().getNext().getName());
         data.put(ScoreboardVariable.TIMER, Utils.secondsToTime(arena.getTime()));

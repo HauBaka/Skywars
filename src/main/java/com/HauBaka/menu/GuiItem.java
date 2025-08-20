@@ -11,17 +11,17 @@ import java.util.function.Consumer;
 public class GuiItem {
     @Getter
     private final ItemStack item;
-    private final Map<ClickType, Consumer<Object>> consumers;
+    private final Map<ClickType, Runnable> consumers;
     public GuiItem(ItemStack item) {
         this.item = item;
         consumers = new IdentityHashMap<>();
     }
-    public GuiItem setExecute(ClickType clickType, Consumer<Object> consumer) {
-        consumers.put(clickType, consumer);
+    public GuiItem setExecute(ClickType clickType, Runnable runnable) {
+        consumers.put(clickType, runnable);
         return this;
     }
-    public void execute(ClickType clickType, Object object) {
-        if (consumers.containsKey(clickType)) consumers.get(clickType).accept(object);
+    public void execute(ClickType clickType) {
+        if (consumers.containsKey(clickType)) consumers.get(clickType).run();
     }
 
     @Override

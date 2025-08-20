@@ -47,7 +47,7 @@ public class GuiMenu implements Listener {
     private void execute(ClickType clickType, int slot) {
         GuiItem item = itemSlots.get(slot);
         if (item != null) {
-            item.execute(clickType, gamePlayer);
+            item.execute(clickType);
         }
     }
 

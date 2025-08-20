@@ -170,7 +170,7 @@ public class ArenaSetup {
                 "",
                 "&e&lLEFT CLICK TO REMOVE"
         );
-        lobby.setConsumer(Action.LEFT_CLICK_BLOCK,o -> {
+        lobby.setRunnable(Action.LEFT_CLICK_BLOCK,() -> {
             setLobby((Location) null);
         });
         editor.sendMessage("&2&lPLACED!&r&a Lobby has been set!");
@@ -210,10 +210,10 @@ public class ArenaSetup {
                 "&e&lLEFT CLICK TO REMOVE!"
         );
 
-        block.setConsumer(Action.RIGHT_CLICK_BLOCK,e -> {
+        block.setRunnable(Action.RIGHT_CLICK_BLOCK,() -> {
             openSpawnsMenu(block);
         });
-        block.setConsumer(Action.LEFT_CLICK_BLOCK, e -> {
+        block.setRunnable(Action.LEFT_CLICK_BLOCK, () -> {
             removeTeam(block);
         });
     }
@@ -300,7 +300,7 @@ public class ArenaSetup {
                     "",
                     "&eLeft click to remove!");
 
-            templateBlock.setConsumer(Action.LEFT_CLICK_BLOCK, e -> {
+            templateBlock.setRunnable(Action.LEFT_CLICK_BLOCK, () -> {
                 if (!getSpawnChests().containsKey(templateBlock.getTeamNumber())) {
                     return;
                 }
@@ -322,7 +322,7 @@ public class ArenaSetup {
                 "&aMid chest",
                 "",
                 "&eLeft click to remove!");
-        templateBlock.setConsumer(Action.LEFT_CLICK_BLOCK, e -> {
+        templateBlock.setRunnable(Action.LEFT_CLICK_BLOCK, () -> {
             if (getMidChests().contains(templateBlock)) {
                 getMidChests().remove(templateBlock);
                 templateBlock.destroy();
@@ -369,7 +369,7 @@ public class ArenaSetup {
                                                     "&cbe removed!."
                                             ),
                                             null)
-                            ).setExecute(ClickType.LEFT,o -> {
+                            ).setExecute(ClickType.LEFT,() -> {
                                 replaceTeam(finalI +1, templateBlock.getTeamNumber(), false);
                                 editor.getPlayer().closeInventory();
                                 openSpawnsMenu(templateBlock);
@@ -393,14 +393,14 @@ public class ArenaSetup {
                                                     "&eMiddle click&7 to teleport to."
                                             ),
                                             null)
-                            ).setExecute(ClickType.LEFT,o -> {
+                            ).setExecute(ClickType.LEFT,() -> {
                                 replaceTeam(team.getTeamNumber(), templateBlock.getTeamNumber(), false);
                                 editor.getPlayer().closeInventory();
                                 openSpawnsMenu(templateBlock);
-                            }).setExecute(ClickType.RIGHT, o -> {
+                            }).setExecute(ClickType.RIGHT, () -> {
                                 team.addYaw();
                                 editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ORB_PICKUP, 1f, 1f);
-                            }).setExecute(ClickType.MIDDLE, o -> {
+                            }).setExecute(ClickType.MIDDLE, () -> {
                                 Location loc = world.getSpawnLocation();
                                 loc.setX(team.getX());
                                 loc.setY(team.getY());
@@ -426,10 +426,10 @@ public class ArenaSetup {
                                     ),
                                     null
                             )
-                        ).setExecute(ClickType.LEFT, o-> {
+                        ).setExecute(ClickType.LEFT, ()-> {
                             editor.sendMessage("&4&lERROR! &cTeam " + templateBlock.getTeamNumber() +"'s spawn is current location!");
                             editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ENDERMAN_HIT, 1f, 1f);
-                        }).setExecute(ClickType.RIGHT, o1 -> {
+                        }).setExecute(ClickType.RIGHT, () -> {
                             templateBlock.addYaw();
                             editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ORB_PICKUP, 1f, 1f);
                         })
@@ -444,7 +444,7 @@ public class ArenaSetup {
                                 "&eRemove this spawn."
                         ),
                         null
-                )).setExecute(ClickType.LEFT, o -> {
+                )).setExecute(ClickType.LEFT, () -> {
                     removeTeam(templateBlock);
                     editor.getPlayer().closeInventory();
                 }

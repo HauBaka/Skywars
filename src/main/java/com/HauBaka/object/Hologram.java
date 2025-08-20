@@ -28,7 +28,6 @@ public class Hologram {
         double yOffset = 0.25*(lines.length+1);
         for (String line : lines) {
             yOffset -= 0.25;
-            if (line.isEmpty()) continue;
             spawnLine(baseLocation.clone().add(0, yOffset, 0), ChatColor.translateAlternateColorCodes('&', line));
         }
     }
@@ -55,6 +54,10 @@ public class Hologram {
     }
 
     private void spawnLine(Location loc, String text) {
+        if (text.isEmpty()) {
+            armorStands.add(null);
+            return;
+        }
         ArmorStand as = loc.getWorld().spawn(loc, ArmorStand.class);
         as.setVisible(false);
         as.setGravity(false);

@@ -12,7 +12,7 @@ public enum ArenaState {
     PHASE_3("Refill", 150, null),
     DOOM("Doom", 150, null),
     ENDING("Ending", 12, null),
-    TO_HUB("To Hub", 0, null);
+    CLOSED("To Hub", 0, null);
 
     @Getter
     private ArenaState next;
@@ -37,6 +37,6 @@ public enum ArenaState {
         PHASE_2.next = PHASE_3;
         PHASE_3.next = DOOM;
         DOOM.next = ENDING;
-        ENDING.next = TO_HUB;
+        ENDING.next = CLOSED;
     }
 }

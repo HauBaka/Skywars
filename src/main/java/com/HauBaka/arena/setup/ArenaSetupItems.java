@@ -26,7 +26,7 @@ public class ArenaSetupItems {
                             "&7to &ateleport&7 to it's location"
                     ),
                     null)
-    ).setInteract(Arrays.asList(Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK), event -> {
+    ).setInteract(Arrays.asList(Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK), (event) -> {
         event.setCancelled(true);
         Player player = event.getPlayer();
         Location loc = Utils.getTargetBlockLocation(player);

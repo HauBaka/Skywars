@@ -47,7 +47,7 @@ public class ScoreboardData {
         variables.put(object, variable);
     }
     public static List<String> getScoreboard(Object object) {
-        return new ArrayList<>(scoreboard_lines.get(object));
+        return scoreboard_lines.get(object);
     }
     public static int getIndex(Object object, ScoreboardVariable scoreboardVariable) {
         return variables.containsKey(object) ?
