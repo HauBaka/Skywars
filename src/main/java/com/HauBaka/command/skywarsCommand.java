@@ -95,6 +95,8 @@ public class skywarsCommand extends BaseCommand {
             gamePlayer.sendMessage("&4&lERROR!&r&c No arena found!");
             return;
         }
+        Arena oldArena = gamePlayer.getArena();
+        if (oldArena != null) oldArena.removePlayer(gamePlayer);
         if (!arena.addPlayer(gamePlayer)) {
             gamePlayer.sendMessage("&4&lERROR!&r&c Can't join this arena!");
             return;

@@ -6,7 +6,7 @@ import com.HauBaka.event.BlockBreakEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-public class blockBreak implements Listener {
+public class blockBreakHandle implements Listener {
     @EventHandler
     public void blockBreakEvent(BlockBreakEvent event) {
         Arena arena = event.getArena();

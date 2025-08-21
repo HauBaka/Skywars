@@ -121,7 +121,7 @@ public class TemplateArena {
                     templateLocation.getX(), templateLocation.getY(), templateLocation.getZ(),
                     templateLocation.getYaw(), templateLocation.getPitch());
 
-            ArenaTeam arenaTeam = new ArenaTeam(arena, spawn, String.valueOf((char)'A' + i));
+            ArenaTeam arenaTeam = new ArenaTeam(arena, spawn, (char) ('A' + i));
             for (TemplateLocation chestTemplateLocation : spawnChests.get(i)) {
                 Location chestSpawn = new Location(arena.getWorld(),
                         chestTemplateLocation.getX(), chestTemplateLocation.getY(), chestTemplateLocation.getZ());

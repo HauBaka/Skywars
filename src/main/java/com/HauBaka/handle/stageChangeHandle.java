@@ -20,8 +20,7 @@ public class stageChangeHandle implements Listener {
     @EventHandler
     public void onStageChange(ArenaStageChangeEvent event) {
         Arena arena = event.getArena();
-        ArenaState newStage = event.getNewState();
-        switch (newStage) {
+        switch (arena.getState()) {
             case STARTING:
                 arena.getCountDownTask().starting();
                 break;
@@ -38,16 +37,16 @@ public class stageChangeHandle implements Listener {
                 arena.refill();
                 for (ArenaTeam team : arena.getTeams())
                     team.removeCage();
-                arena.getCountDownTask().doTimerLoop(o -> {});
+                arena.getCountDownTask().doTimerLoop(() -> {});
                 break;
             case PHASE_2:
             case PHASE_3:
                 arena.refill();
-                arena.getCountDownTask().doTimerLoop(o -> {});
+                arena.getCountDownTask().doTimerLoop(() -> {});
                 break;
             case DOOM:
                 arena.refill();
-                arena.getCountDownTask().doTimerLoop(o -> {});
+                arena.getCountDownTask().doTimerLoop(() -> {});
                 new BukkitRunnable() {
                     @Override
                     public void run() {

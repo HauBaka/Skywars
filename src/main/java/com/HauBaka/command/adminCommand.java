@@ -23,7 +23,11 @@ public class adminCommand extends BaseCommand {
     @CommandPermission("sw.admin.clone")
     @Syntax("<+tag> <mapName> <mode> <type>")
     public static void onClone(CommandSender sender, String[] args) {
-        if (args.length != 3) return;
+        if (args.length != 3) {
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                    "&cUsage: /skywars clone <mapName> <mode> <type>"));
+            return;
+        }
 
         ArenaVariant.Mode mode;
         ArenaVariant.Type type;
@@ -83,7 +87,10 @@ public class adminCommand extends BaseCommand {
             gamePlayer.sendMessage("&4&lERROR!&r&c No game found!");
             return;
         }
-        arena.broadcast("&eThis game has been forced to start!");
-        arena.setState(ArenaState.STARTING);
+        if (arena.getState() == ArenaState.AVAILABLE || arena.getState() == ArenaState.WAITING) {
+            arena.broadcast("&eThis game has been forced to start!");
+            arena.setState(ArenaState.STARTING);
+        } else gamePlayer.sendMessage("&4&lERROR!&r&c This game started!");
+
     }
 }

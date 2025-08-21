@@ -1,60 +1,185 @@
-phase_1:
-  insane:
-    spawns:
-      - item: IRON_HELMET
-        chance: 55
-    mid:
-      - item: IRON_HELMET
-        chance: 55
-  normal:
-    spawns:
-      - item: IRON_HELMET
-        chance: 55
-        mid:
-      - item: IRON_HELMET
-        chance: 55
-phase_2:
-  insane:
-    spawns:
-      - item: IRON_HELMET
-        chance: 55
-    mid:
-      - item: IRON_HELMET
-        chance: 55
-  normal:
-    spawns:
-      - item: IRON_HELMET
-        chance: 55
-        mid:
-      - item: IRON_HELMET
-        chance: 55
-phase_3:
-  insane:
-    spawns:
-      - item: IRON_HELMET
-        chance: 55
-    mid:
-      - item: IRON_HELMET
-        chance: 55
-  normal:
-    spawns:
-      - item: IRON_HELMET
-        chance: 55
-        mid:
-      - item: IRON_HELMET
-        chance: 55
-doom:
-  insane:
-    spawns:
-      - item: IRON_HELMET
-        chance: 55
-    mid:
-      - item: IRON_HELMET
-        chance: 55
-  normal:
-    spawns:
-      - item: IRON_HELMET
-        chance: 55
-        mid:
-      - item: IRON_HELMET
-        chance: 55
+solo_normal_phase1:
+  spawn:
+    - 40 | STONE_SWORD
+    - 20 | LEATHER_HELMET
+  mid:
+    - 30 | IRON_SWORD
+    - 10 | GOLDEN_APPLE;amount=1
+
+solo_normal_phase2:
+  inherit: solo_normal_phase1
+  spawn:
+    - 25 | IRON_HELMET
+  mid:
+    - 40 | IRON_CHESTPLATE
+    - 20 | ENDER_PEARL;amount=1
+
+solo_normal_phase3:
+  inherit: solo_normal_phase2
+  spawn:
+    - 30 | DIAMOND_BOOTS
+  mid:
+    - 30 | DIAMOND_SWORD;enchant={SHARPNESS:2}
+    - 15 | ENDER_PEARL;amount=2
+
+solo_normal_doom:
+  inherit: solo_normal_phase3
+  spawn:
+    - 20 | DIAMOND_HELMET
+  mid:
+    - 40 | ENDER_PEARL;amount=3
+    - 20 | DRAGON_EGG
+
+solo_insane_phase1:
+  spawn:
+    - 30 | IRON_HELMET
+    - 30 | WOOL:14;name="red wool",amount=32,lore={"hel","nah"},enchant={SHARPNESS:1},flag={HIDE_ATTRIBUTES}
+  mid:
+    - 50 | DIAMOND_SWORD;enchant={SHARPNESS:2,UNBREAKING:3}
+    - 20 | GOLDEN_APPLE;amount=3
+
+solo_insane_phase2:
+  inherit: solo_insane_phase1
+  spawn:
+    - 30 | IRON_CHESTPLATE
+  mid:
+    - 50 | IRON_SWORD;enchant={SHARPNESS:2,UNBREAKING:3}
+
+solo_insane_phase3:
+  inherit: solo_insane_phase2
+  spawn:
+    - 30 | DIAMOND_LEGGINGS
+  mid:
+    - 50 | DIAMOND_HELMET;enchant={PROTECTION:3}
+
+solo_insane_doom:
+  inherit: solo_insane_phase3
+  spawn:
+    - 40 | DIAMOND_CHESTPLATE;enchant={PROTECTION:4}
+  mid:
+    - 50 | ENDER_PEARL;amount=4
+    - 30 | DRAGON_EGG
+
+doubles_normal_phase1:
+  spawn:
+    - 40 | STONE_SWORD
+  mid:
+    - 30 | IRON_SWORD
+    - 20 | GOLDEN_APPLE;amount=2
+
+doubles_normal_phase2:
+  inherit: doubles_normal_phase1
+  spawn:
+    - 30 | IRON_CHESTPLATE
+  mid:
+    - 40 | DIAMOND_SWORD
+    - 20 | ENDER_PEARL;amount=1
+
+doubles_normal_phase3:
+  inherit: doubles_normal_phase2
+  spawn:
+    - 30 | DIAMOND_HELMET
+  mid:
+    - 40 | DIAMOND_CHESTPLATE
+    - 30 | ENDER_PEARL;amount=2
+
+doubles_normal_doom:
+  inherit: doubles_normal_phase3
+  spawn:
+    - 40 | DIAMOND_BOOTS
+  mid:
+    - 50 | ENDER_PEARL;amount=3
+    - 30 | DRAGON_EGG
+
+doubles_insane_phase1:
+  spawn:
+    - 40 | IRON_SWORD
+  mid:
+    - 40 | DIAMOND_SWORD;enchant={SHARPNESS:2}
+    - 20 | GOLDEN_APPLE;amount=3
+
+doubles_insane_phase2:
+  inherit: doubles_insane_phase1
+  spawn:
+    - 40 | DIAMOND_HELMET
+  mid:
+    - 40 | DIAMOND_CHESTPLATE;enchant={PROTECTION:3}
+    - 20 | ENDER_PEARL;amount=2
+
+doubles_insane_phase3:
+  inherit: doubles_insane_phase2
+  spawn:
+    - 40 | DIAMOND_BOOTS
+  mid:
+    - 40 | DIAMOND_LEGGINGS;enchant={PROTECTION:3}
+    - 30 | ENDER_PEARL;amount=3
+
+doubles_insane_doom:
+  inherit: doubles_insane_phase3
+  spawn:
+    - 50 | DIAMOND_CHESTPLATE;enchant={PROTECTION:4}
+  mid:
+    - 50 | ENDER_PEARL;amount=4
+    - 30 | DRAGON_EGG
+
+mega_normal_phase1:
+  spawn:
+    - 30 | STONE_SWORD
+  mid:
+    - 30 | IRON_SWORD
+    - 20 | GOLDEN_APPLE;amount=2
+
+mega_normal_phase2:
+  inherit: mega_normal_phase1
+  spawn:
+    - 30 | IRON_HELMET
+  mid:
+    - 40 | IRON_CHESTPLATE
+    - 20 | ENDER_PEARL;amount=1
+
+mega_normal_phase3:
+  inherit: mega_normal_phase2
+  spawn:
+    - 30 | DIAMOND_HELMET
+  mid:
+    - 40 | DIAMOND_SWORD
+    - 30 | ENDER_PEARL;amount=2
+
+mega_normal_doom:
+  inherit: mega_normal_phase3
+  spawn:
+    - 40 | DIAMOND_CHESTPLATE
+  mid:
+    - 50 | ENDER_PEARL;amount=3
+    - 30 | DRAGON_EGG
+
+mega_insane_phase1:
+  spawn:
+    - 40 | IRON_SWORD
+  mid:
+    - 40 | DIAMOND_SWORD;enchant={SHARPNESS:2}
+    - 20 | GOLDEN_APPLE;amount=3
+
+mega_insane_phase2:
+  inherit: mega_insane_phase1
+  spawn:
+    - 40 | DIAMOND_HELMET
+  mid:
+    - 40 | DIAMOND_CHESTPLATE;enchant={PROTECTION:3}
+    - 20 | ENDER_PEARL;amount=2
+
+mega_insane_phase3:
+  inherit: mega_insane_phase2
+  spawn:
+    - 40 | DIAMOND_BOOTS
+  mid:
+    - 40 | DIAMOND_LEGGINGS;enchant={PROTECTION:3}
+    - 30 | ENDER_PEARL;amount=3
+
+mega_insane_doom:
+  inherit: mega_insane_phase3
+  spawn:
+    - 50 | DIAMOND_CHESTPLATE;enchant={PROTECTION:4}
+  mid:
+    - 50 | ENDER_PEARL;amount=4
+    - 30 | DRAGON_EGG

@@ -3,6 +3,7 @@ package com.HauBaka.object.cage;
 import com.HauBaka.Skywars;
 import com.HauBaka.enums.ObjectRarity;
 import com.HauBaka.file.FileConfig;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -32,6 +33,7 @@ public class CageManager {
             FileConfiguration fileConfiguration = YamlConfiguration.loadConfiguration(file);
             load(fileConfiguration);
         }
+        Bukkit.getLogger().info("Loaded " + cageList.size() + " cages");
     }
 
     private static void load(FileConfiguration config) {

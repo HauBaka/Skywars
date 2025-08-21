@@ -1,7 +1,6 @@
 package com.HauBaka;
 
 import co.aikar.commands.PaperCommandManager;
-import co.aikar.commands.contexts.ContextResolver;
 import com.HauBaka.arena.ArenaManager;
 import com.HauBaka.arena.setup.ArenaSetupManager;
 import com.HauBaka.command.adminCommand;
@@ -9,24 +8,17 @@ import com.HauBaka.command.arenaSetupCommand;
 import com.HauBaka.command.skywarsCommand;
 import com.HauBaka.command.testCommand;
 import com.HauBaka.file.FileConfig;
-import com.HauBaka.handle.blockBreak;
-import com.HauBaka.handle.chestHandle;
-import com.HauBaka.handle.stageChangeHandle;
+import com.HauBaka.handle.*;
 import com.HauBaka.object.cage.CageManager;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.world.WorldManager;
 import lombok.Getter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Skywars extends JavaPlugin {
 
-    @Getter
-    private static final Logger pluginLogger = LogManager.getLogger("Skywars");
     @Getter
     private FileConfig messageConfig;
     @Getter
@@ -37,7 +29,6 @@ public class Skywars extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-
         getLogger().info("Plugin enabled!");
         CageManager.init();
         WorldManager.init();
@@ -50,13 +41,18 @@ public class Skywars extends JavaPlugin {
         configConfig.saveDefaultConfig();
         registerCommands();
         registerEvents();
+
+        WorldManager.disableWorldLogs();
+
     }
 
     private void registerEvents() {
         PluginManager pm = Bukkit.getPluginManager();
-        pm.registerEvents(new blockBreak(), this);
+        pm.registerEvents(new blockBreakHandle(), this);
         pm.registerEvents(new chestHandle(), this);
         pm.registerEvents(new stageChangeHandle(), this);
+        pm.registerEvents(new playerDamageHandle(), this);
+        pm.registerEvents(new playerDeathHandle(), this);
 
     }
 

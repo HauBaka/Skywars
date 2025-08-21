@@ -294,6 +294,8 @@ public class ArenaSetup {
                 return;
             }
         }
+        if (getSpawnChests().get(getCurrentSpawn()).size() == CHEST_PER_SPAWN) return;
+
         if (stage == ArenaSetupStage.SPAWN) {
             templateBlock.getHologram().setLines(
                     "&aTeam #" + getCurrentSpawn() +"'s chest",
@@ -355,100 +357,18 @@ public class ArenaSetup {
             if (i+1 != templateBlock.getTeamNumber()) {
                 TemplateBlock team = spawns.get(i+1);
                 if (team == null) {
-                    int finalI = i;
-                    guiMenu.setItem(invLocations[i], new GuiItem(
-                                    Utils.buildItem(
-                                            new ItemStack(Material.WOOL, i+1, (byte) 7),
-                                            "&aTeam #" + (i+1),
-                                            Arrays.asList(
-                                                    "&eLeft click&7 to set current",
-                                                    "&7location to &ateam #" + (i+1) + "'s",
-                                                    "&aspawn&7.",
-                                                    "",
-                                                    "&4&lWarning&r&c Chests in this team will",
-                                                    "&cbe removed!."
-                                            ),
-                                            null)
-                            ).setExecute(ClickType.LEFT,() -> {
-                                replaceTeam(finalI +1, templateBlock.getTeamNumber(), false);
-                                editor.getPlayer().closeInventory();
-                                openSpawnsMenu(templateBlock);
-                            })
-                    );
-                } else {
-                    guiMenu.setItem(invLocations[i], new GuiItem(
-                                    Utils.buildItem(
-                                            new ItemStack(Material.WOOL, team.getTeamNumber(), (byte) 5),
-                                            "&aTeam #" + team.getTeamNumber(),
-                                            Arrays.asList(
-                                                    "&eLeft click&7 to set current",
-                                                    "&7location to &ateam #" + team.getTeamNumber() + "'s",
-                                                    "&aspawn&7.",
-                                                    "",
-                                                    "&4&lWarning&r&c Chests in this team will",
-                                                    "&cbe removed!.",
-                                                    "",
-                                                    "&eRight click&7 to &arotate yaw.",
-                                                    "",
-                                                    "&eMiddle click&7 to teleport to."
-                                            ),
-                                            null)
-                            ).setExecute(ClickType.LEFT,() -> {
-                                replaceTeam(team.getTeamNumber(), templateBlock.getTeamNumber(), false);
-                                editor.getPlayer().closeInventory();
-                                openSpawnsMenu(templateBlock);
-                            }).setExecute(ClickType.RIGHT, () -> {
-                                team.addYaw();
-                                editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ORB_PICKUP, 1f, 1f);
-                            }).setExecute(ClickType.MIDDLE, () -> {
-                                Location loc = world.getSpawnLocation();
-                                loc.setX(team.getX());
-                                loc.setY(team.getY());
-                                loc.setZ(team.getZ());
-                                loc.setYaw(team.getDirection().getYaw());
-                                loc.setPitch(editor.getPlayer().getLocation().getPitch());
-                                editor.getPlayer().teleport(loc);
-                                editor.getPlayer().playSound(loc,Sound.ENDERMAN_TELEPORT, 1f, 1f);
-                            })
-                    );
+                    guiMenu.setItem(invLocations[i], buildEmptyTeamItem(i+1,templateBlock,guiMenu));
                 }
-            } else {
-                guiMenu.setItem(
-                        invLocations[i],
-                        new GuiItem(
-                            Utils.buildItem(
-                                    new ItemStack(Material.WOOL, i+1, (byte) 14),
-                                    "&aTeam #" + (i+1),
-                                    Arrays.asList(
-                                            "&cThis is current location!",
-                                            "",
-                                            "&eRight click&7 to &arotate yaw."
-                                    ),
-                                    null
-                            )
-                        ).setExecute(ClickType.LEFT, ()-> {
-                            editor.sendMessage("&4&lERROR! &cTeam " + templateBlock.getTeamNumber() +"'s spawn is current location!");
-                            editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ENDERMAN_HIT, 1f, 1f);
-                        }).setExecute(ClickType.RIGHT, () -> {
-                            templateBlock.addYaw();
-                            editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ORB_PICKUP, 1f, 1f);
-                        })
-                );
+                else {
+                    guiMenu.setItem(invLocations[i], buildPlacedTeamItem(team, templateBlock, guiMenu));
+                }
+            }
+            else {
+                guiMenu.setItem(invLocations[i], buildCurrentTeamItem(templateBlock));
             }
         }
-        guiMenu.setItem(35,new GuiItem(
-                Utils.buildItem(
-                        new ItemStack(Material.REDSTONE_BLOCK),
-                        "&c&lREMOVE",
-                        Collections.singletonList(
-                                "&eRemove this spawn."
-                        ),
-                        null
-                )).setExecute(ClickType.LEFT, () -> {
-                    removeTeam(templateBlock);
-                    editor.getPlayer().closeInventory();
-                }
-        ));
+        guiMenu.setItem(35, buildRemoveButton(templateBlock));
+        editor.getPlayer().closeInventory();
         guiMenu.open();
     }
 
@@ -506,4 +426,112 @@ public class ArenaSetup {
 
         stopEdit();
     }
+
+    private GuiItem buildEmptyTeamItem(int teamNumber, TemplateBlock currentBlock, GuiMenu guiMenu) {
+        return new GuiItem(
+                Utils.buildItem(
+                        new ItemStack(Material.WOOL, teamNumber, (byte) 7),
+                        "&aTeam #" + teamNumber,
+                        Arrays.asList(
+                                "&eLeft click&7 to set current",
+                                "&7location to &ateam #" + teamNumber + "'s",
+                                "&aspawn&7."
+                        ),
+                        null
+                )
+        ).setExecute(ClickType.LEFT, () -> {
+            //remove current team
+            guiMenu.setItem(
+                    invLocations[currentBlock.getTeamNumber()-1],
+                    buildEmptyTeamItem(currentBlock.getTeamNumber(),currentBlock,guiMenu)
+            );
+            //replace
+            replaceTeam(teamNumber, currentBlock.getTeamNumber(), false);
+            //set new team
+            guiMenu.setItem(
+                    invLocations[teamNumber - 1],
+                    buildCurrentTeamItem(currentBlock)
+            );
+        });
+    }
+    private GuiItem buildPlacedTeamItem(TemplateBlock team, TemplateBlock currentBlock, GuiMenu guiMenu) {
+        return new GuiItem(
+                Utils.buildItem(
+                        new ItemStack(Material.WOOL, team.getTeamNumber(), (byte) 5),
+                        "&aTeam #" + team.getTeamNumber(),
+                        Arrays.asList(
+                                "&eLeft click&7 to set current",
+                                "&7location to &ateam #" + team.getTeamNumber() + "'s",
+                                "&aspawn&7.",
+                                "",
+                                "&4&lWarning&r&c Chests in this team will",
+                                "&cbe removed!.",
+                                "",
+                                "&eRight click&7 to &arotate yaw.",
+                                "",
+                                "&eMiddle click&7 to teleport to."
+                        ),
+                        null
+                )
+        ).setExecute(ClickType.LEFT, () -> {
+            //remove old team
+            guiMenu.setItem(
+                    invLocations[currentBlock.getTeamNumber()-1],
+                    buildEmptyTeamItem(currentBlock.getTeamNumber(), currentBlock, guiMenu)
+            );
+            //replace
+            replaceTeam(team.getTeamNumber(), currentBlock.getTeamNumber(), false);
+            //set new team
+            guiMenu.setItem(
+                    invLocations[currentBlock.getTeamNumber()-1],
+                    buildCurrentTeamItem(currentBlock)
+            );
+        }).setExecute(ClickType.RIGHT, () -> {
+            team.addYaw();
+            editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ORB_PICKUP, 1f, 1f);
+        }).setExecute(ClickType.MIDDLE, () -> {
+            Location loc = world.getSpawnLocation();
+            loc.setX(team.getX() + 0.5f);
+            loc.setY(team.getY() + 1f);
+            loc.setZ(team.getZ() + 0.5f);
+            loc.setYaw(team.getDirection().getYaw());
+            loc.setPitch(editor.getPlayer().getLocation().getPitch());
+            editor.getPlayer().teleport(loc);
+            editor.getPlayer().playSound(loc, Sound.ENDERMAN_TELEPORT, 1f, 1f);
+        });
+    }
+    private GuiItem buildCurrentTeamItem(TemplateBlock block) {
+        return new GuiItem(
+                Utils.buildItem(
+                        new ItemStack(Material.WOOL, block.getTeamNumber(), (byte) 14),
+                        "&aTeam #" + block.getTeamNumber(),
+                        Arrays.asList(
+                                "&cThis is current location!",
+                                "",
+                                "&eRight click&7 to &arotate yaw."
+                        ),
+                        null
+                )
+        ).setExecute(ClickType.LEFT, () -> {
+            editor.sendMessage("&4&lERROR! &cTeam " + block.getTeamNumber() + "'s spawn is current location!");
+            editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ENDERMAN_HIT, 1f, 1f);
+        }).setExecute(ClickType.RIGHT, () -> {
+            block.addYaw();
+            editor.getPlayer().playSound(editor.getPlayer().getLocation(), Sound.ORB_PICKUP, 1f, 1f);
+        });
+    }
+    private GuiItem buildRemoveButton(TemplateBlock block) {
+        return new GuiItem(
+                Utils.buildItem(
+                        new ItemStack(Material.REDSTONE_BLOCK),
+                        "&c&lREMOVE",
+                        Collections.singletonList("&eRemove this spawn."),
+                        null
+                )
+        ).setExecute(ClickType.LEFT, () -> {
+            removeTeam(block);
+            editor.getPlayer().closeInventory();
+        });
+    }
+
 }

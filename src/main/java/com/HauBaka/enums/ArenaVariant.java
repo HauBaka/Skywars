@@ -2,6 +2,7 @@ package com.HauBaka.enums;
 
 import com.HauBaka.utils.Utils;
 import lombok.Getter;
+import org.bukkit.Bukkit;
 
 public class ArenaVariant {
     public enum Mode {
@@ -43,5 +44,13 @@ public class ArenaVariant {
     public ArenaVariant(Mode mode, Type type) {
         this.mode = mode;
         this.type = type;
+    }
+    public static ArenaVariant valueOf(String key) {
+        String[] arr= key.split("_");
+        if (arr.length != 2) {
+            Bukkit.getLogger().warning("Unknow ArenaVariant: " + key);
+            return null;
+        }
+        return new ArenaVariant(Mode.valueOf(arr[0]), Type.valueOf(arr[1]));
     }
 }

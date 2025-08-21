@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -25,22 +26,27 @@ public class ChestItem {
         return item.clone();
     }
 
-    public static ItemStack buildItem(String material, int amount, String name,
-                                      List<String> lore, Map<Enchantment, Integer> enchants) {
-        ItemStack item = new ItemStack(Material.valueOf(material), amount);
+    public static ItemStack buildItem(String material, byte data, int amount, String name,
+                                      List<String> lore, Map<Enchantment, Integer> enchants,
+                                      List<ItemFlag> flags) {
+        Material mat = Material.matchMaterial(material);
+        if (mat == null) throw new IllegalArgumentException("Invalid material: " + material);
+
+        ItemStack item = new ItemStack(mat, amount, data);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
-
-        if (name != null) meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
+        if (name != null)
+            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
         if (lore != null) {
             List<String> coloredLore = lore.stream()
                     .map(s -> ChatColor.translateAlternateColorCodes('&', s))
                     .collect(Collectors.toList());
             meta.setLore(coloredLore);
         }
-        if (enchants != null) {
-            enchants.forEach((ench, lvl) -> meta.addEnchant(ench, lvl, true));
+        for (Map.Entry<Enchantment, Integer> entry : enchants.entrySet()) {
+            meta.addEnchant(entry.getKey(), entry.getValue(), true);
         }
+        if (flags != null) meta.addItemFlags(flags.toArray(new ItemFlag[0]));
         item.setItemMeta(meta);
         return item;
     }

@@ -199,7 +199,7 @@ public class GameScoreboard {
         }
 
         for (ArenaTeam team : arena.getTeams()) {
-            String teamName = team.equals(myTeam) ? "000_" + team.getName() : team.getName();
+            String teamName = team.equals(myTeam) ? "000_" + team.getName() : String.valueOf(team.getName());
             Team sbTeam = scoreboard.getTeam(teamName);
             if (sbTeam == null) sbTeam = scoreboard.registerNewTeam(teamName);
 
@@ -263,7 +263,7 @@ public class GameScoreboard {
     }
 
     public void addToTablist(GamePlayer gp, ArenaTeam team, boolean isMyTeam) {
-        String teamName = isMyTeam ? "000_" + team.getName() : team.getName();
+        String teamName = isMyTeam ? "000_" + team.getName() : String.valueOf(team.getName());
         Team sbTeam = scoreboard.getTeam(teamName);
         if (sbTeam == null) {
             sbTeam = scoreboard.registerNewTeam(teamName);

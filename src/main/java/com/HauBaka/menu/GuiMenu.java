@@ -24,11 +24,13 @@ public class GuiMenu implements Listener {
     private final Map<Integer, GuiItem> itemSlots;
     @Getter
     private final Inventory inventory;
-
+    @Getter
+    private boolean destroyed;
     public GuiMenu(String name, int size, GamePlayer owner) {
         this.inventory = Bukkit.createInventory(null, size, name);
         this.itemSlots = new ConcurrentHashMap<>();
         this.gamePlayer = owner;
+        this.destroyed = false;
     }
 
     public void open() {
@@ -39,9 +41,14 @@ public class GuiMenu implements Listener {
     }
 
     public void setItem(int slot, GuiItem item) {
+        this.itemSlots.remove(slot);
         this.itemSlots.put(slot, item);
+        this.inventory.setItem(slot, null);
         this.inventory.setItem(slot, item.getItem());
-        gamePlayer.getPlayer().updateInventory();
+        Player player = gamePlayer.getPlayer();
+        if (player.getOpenInventory().getTopInventory().equals(this.inventory)) {
+            player.updateInventory();
+        }
     }
 
     private void execute(ClickType clickType, int slot) {
@@ -55,6 +62,7 @@ public class GuiMenu implements Listener {
     public void onClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         if (!event.getWhoClicked().equals(gamePlayer.getPlayer())) return;
+        if (!event.getInventory().equals(inventory)) return;
         event.setCancelled(true);
         execute(event.getClick(), event.getSlot());
     }
@@ -83,6 +91,8 @@ public class GuiMenu implements Listener {
     }
 
     public void destroy() {
+        destroyed = true;
+        System.out.println(inventory.getTitle() + " inventory is destroyed!");
         HandlerList.unregisterAll(this);
     }
 }

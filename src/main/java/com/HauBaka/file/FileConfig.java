@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.Getter;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -80,7 +81,7 @@ public class FileConfig {
         try {
             getConfig().save(this.file);
         } catch (IOException iOException) {
-            Skywars.getPluginLogger().warn("Could not save config to {}", this.fileConfiguration, iOException);
+            Bukkit.getLogger().warning("Could not save config to " + this.fileConfiguration.getName());
         }
     }
     /**
@@ -135,10 +136,10 @@ public class FileConfig {
                 }
                 if (bool) {
                     saveConfig();
-                    Skywars.getPluginLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.GREEN + "updating a config...");
+                    Bukkit.getLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.GREEN + "updating a config...");
                     for (Map.Entry<Object, Object> entry : hashMap.entrySet())
-                        Skywars.getPluginLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.YELLOW + (String)entry.getKey() + " " + ChatColor.GREEN + " value " + ChatColor.YELLOW + entry.getValue());
-                    Skywars.getPluginLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.GREEN + "config has been updated!");
+                        Bukkit.getLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.YELLOW + (String)entry.getKey() + " " + ChatColor.GREEN + " value " + ChatColor.YELLOW + entry.getValue());
+                    Bukkit.getLogger().info(ChatColor.GOLD + this.filename + ": " + ChatColor.GREEN + "config has been updated!");
                 }
             }
         } catch (Exception exception) {

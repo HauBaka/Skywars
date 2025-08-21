@@ -87,17 +87,23 @@ public class TemplateBlock implements Listener {
     public TemplateArena.TemplateLocation toTemplateLocation() {
         return new TemplateArena.TemplateLocation(x,y,z,direction.getYaw(),0f);
     }
+    public boolean equal(Location location) {
+        if (location == null) return false;
+        return loc.getWorld() == location.getWorld() &&
+                loc.getBlockX() == location.getBlockX()
+                && loc.getBlockY() == location.getBlockY()
+                && loc.getBlockZ() == location.getBlockZ();
+    }
     @EventHandler
     public void interact(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
         if (block != null &&
-                block.getLocation().equals(this.loc) &&
+                equal(block.getLocation()) &&
                 runnables.containsKey(event.getAction())) {
             event.setCancelled(true);
             runnables.get(event.getAction()).run();
         }
     }
-
     public void destroy() {
         hologram.destroy();
         HandlerList.unregisterAll(this);

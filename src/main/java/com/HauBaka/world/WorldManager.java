@@ -15,6 +15,8 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class WorldManager  {
     private static SlimePlugin slimePlugin;
@@ -66,6 +68,7 @@ public class WorldManager  {
                         createdWorlds.add(newWorldName);
                         World world = Bukkit.getWorld(newWorldName);
                         callback.accept(world);
+                        Bukkit.getLogger().info("Created clone " + sourceWorldName + " to " + newWorldName);
                     } catch (IllegalArgumentException ex) {
                         Bukkit.getLogger().severe("Error generating world: " + ex.getMessage());
                         callback.accept(null);
@@ -84,26 +87,6 @@ public class WorldManager  {
         cloneWorld(sourceWorldName, worldID, callback);
         return worldID;
     }
-    /*
-    public World cloneWorld(String sourceWorldName) {
-        String newWorldName = ArenaManager.generateID();
-        if (createdWorlds.contains(newWorldName)) {
-            Bukkit.getLogger().warning("World " + newWorldName + " already exists");
-            return null;
-        }
-        try {
-            SlimeLoader loader = slimePlugin.getLoader("file"); // Sử dụng loader phù hợp
-            SlimeWorld slimeWorld = slimePlugin.loadWorld(loader, sourceWorldName, true, new SlimePropertyMap())
-                    .clone(newWorldName);
-            slimePlugin.generateWorld(slimeWorld);
-            createdWorlds.add(newWorldName);
-            return Bukkit.getWorld(newWorldName);
-        } catch (Exception e) {
-            Bukkit.getLogger().severe("Lỗi khi tạo thế giới tạm thời: " + e.getMessage());
-            e.printStackTrace();
-        }
-        return null;
-    } */
     /***
      * Hàm xóa thế giới đã tạo
      @param worldName : tên của thế giới cần phải xóa
@@ -117,6 +100,7 @@ public class WorldManager  {
         }
         Bukkit.unloadWorld(removeW, true);
         createdWorlds.remove(worldName);
+        Bukkit.getLogger().info("Removed world: " + worldName);
     }
 
     /***
@@ -126,5 +110,45 @@ public class WorldManager  {
         for (String worldName : createdWorlds) {
             removeWorld(worldName);
         }
+    }
+
+    public static void disableWorldLogs() {
+        Logger logger = Logger.getLogger("SlimeWorldManager");
+        logger.setLevel(Level.WARNING);
+
+        logger = Bukkit.getServer().getLogger();
+        logger.setFilter(record -> {
+            String msg = record.getMessage();
+            if (msg.contains("World Settings For")) return false;
+            if (msg.contains("Chunks to Grow per Tick")) return false;
+            if (msg.contains("Clear tick list")) return false;
+            if (msg.contains("Experience Merge Radius")) return false;
+            if (msg.contains("View Distance")) return false;
+            if (msg.contains("Arrow Despawn Rate")) return false;
+            if (msg.contains("Item Despawn Rate")) return false;
+            if (msg.contains("Item Merge Radius")) return false;
+            if (msg.contains("Allow Zombie Pigmen")) return false;
+            if (msg.contains("Zombie Aggressive Towards Villager")) return false;
+            if (msg.contains("Max Entity Collisions")) return false;
+            if (msg.contains("Custom Map Seeds")) return false;
+            if (msg.contains("Tile Max Tick Time")) return false;
+            if (msg.contains("Max TNT Explosions")) return false;
+            if (msg.contains("Anti X-Ray")) return false;
+            if (msg.contains("Engine Mode")) return false;
+            if (msg.contains("Hidden Blocks")) return false;
+            if (msg.contains("Replace Blocks")) return false;
+            if (msg.contains("Hopper Transfer")) return false;
+            if (msg.contains("Mob Spawn Range")) return false;
+            if (msg.contains("Structure Info Saving")) return false;
+            if (msg.contains("Growth Modifier")) return false;
+            if (msg.contains("Nerfing mobs spawned from spawners")) return false;
+            if (msg.contains("Entity Tracking Range")) return false;
+            if (msg.contains("Entity Activation Range")) return false;
+            if (msg.contains("Random Lighting Updates")) return false;
+            if (msg.contains("Sending up to")) return false;
+            if (msg.contains("Skipping BlockEntity with id")) return false;
+            if (msg.contains("Loading world")) return false;
+            return true;
+        });
     }
 }

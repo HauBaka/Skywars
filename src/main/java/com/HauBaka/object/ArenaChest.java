@@ -27,13 +27,14 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 
 public class ArenaChest implements Listener {
     // state(phase_1,2...) -> type(normal/insane) -> chestType(spawn/mid) -> list item
-    private static Map<ArenaState, Map<ArenaVariant.Type, Map<ArenaSetupStage, List<ChestItem>>>> chestItems;
+    private static Map<ArenaState, Map<ArenaVariant, Map<ArenaSetupStage, List<ChestItem>>>> chestItems;
 
     private final Arena arena;
     @Getter
@@ -79,7 +80,7 @@ public class ArenaChest implements Listener {
         if (availableSlots.isEmpty()) return;
 
         List<ChestItem> itemList = new ArrayList<>(
-                ArenaChest.getChestItems(arena.getState(), arena.getVariant().getType(), type)
+                ArenaChest.getChestItems(arena.getState(), arena.getVariant(), type)
         );
         if (itemList.isEmpty()) return;
 
@@ -102,59 +103,140 @@ public class ArenaChest implements Listener {
         chestItems = new HashMap<>();
         FileConfig fileConfig = new FileConfig("refill.yml");
         fileConfig.saveDefaultConfig();
+
         for (String phaseKey : fileConfig.getConfig().getKeys(false)) {
-            // Map string phase -> ArenaState
+            // Phase -> ArenaState
             ArenaState state;
             try {
-                state = ArenaState.valueOf(phaseKey.toUpperCase()); // Ex: "phase_1" -> PHASE_1
+                state = ArenaState.valueOf(phaseKey.toUpperCase()); // solo_insane_phase1 -> SOLO_INSANE_PHASE1
             } catch (IllegalArgumentException e) {
                 continue;
             }
 
-            Map<ArenaVariant.Type, Map<ArenaSetupStage, List<ChestItem>>> phaseMap = new HashMap<>();
+            Map<ArenaVariant, Map<ArenaSetupStage, List<ChestItem>>> variantMap = new HashMap<>();
 
-            for (String variantKey : fileConfig.getConfig().getConfigurationSection(phaseKey).getKeys(false)) {
-                ArenaVariant.Type variant = ArenaVariant.Type.valueOf(variantKey.toUpperCase());
-                Map<ArenaSetupStage, List<ChestItem>> typeMap = new HashMap<>();
-
-                for (String chestType : fileConfig.getConfig().getConfigurationSection(phaseKey + "." + variantKey).getKeys(false)) {
-                    List<Map<?, ?>> itemsList = fileConfig.getConfig().getMapList(phaseKey + "." + variantKey + "." + chestType);
-                    List<ChestItem> chestItemList = new ArrayList<>();
-
-                    for (Map<?, ?> itemMap : itemsList) {
-                        double chance = ((Number) itemMap.get("chance")).doubleValue();
-                        String material = (String) itemMap.get("item");
-                        int amount = itemMap.containsKey("amount") ? ((Number) itemMap.get("amount")).intValue() : 1;
-                        String name = (String) itemMap.getOrDefault("name", null);
-                        List<String> lore = itemMap.containsKey("lore") ? (List<String>) itemMap.get("lore") : null;
-
-                        Map<Enchantment, Integer> enchants = new HashMap<>();
-                        if (itemMap.containsKey("enchants")) {
-                            Map<String, Object> enchMap = (Map<String, Object>) itemMap.get("enchants");
-                            for (Map.Entry<String, Object> e : enchMap.entrySet()) {
-                                Enchantment ench = Enchantment.getByName(e.getKey());
-                                int lvl = ((Number) e.getValue()).intValue();
-                                if (ench != null) enchants.put(ench, lvl);
+            String inheritKey = fileConfig.getConfig().getString(phaseKey + ".inherit", null);
+            if (inheritKey != null && fileConfig.getConfig().contains(inheritKey)) {
+                ArenaState parentState;
+                try {
+                    parentState = ArenaState.valueOf(inheritKey.toUpperCase());
+                    if (chestItems.containsKey(parentState)) {
+                        // clone sâu map của parent
+                        Map<ArenaVariant, Map<ArenaSetupStage, List<ChestItem>>> parentMap = chestItems.get(parentState);
+                        for (Map.Entry<ArenaVariant, Map<ArenaSetupStage, List<ChestItem>>> e : parentMap.entrySet()) {
+                            Map<ArenaSetupStage, List<ChestItem>> copyType = new HashMap<>();
+                            for (Map.Entry<ArenaSetupStage, List<ChestItem>> e2 : e.getValue().entrySet()) {
+                                copyType.put(e2.getKey(), new ArrayList<>(e2.getValue()));
                             }
+                            variantMap.put(e.getKey(), copyType);
                         }
-
-                        ItemStack itemStack = ChestItem.buildItem(material, amount, name, lore, enchants);
-                        chestItemList.add(new ChestItem(itemStack, chance));
                     }
+                } catch (IllegalArgumentException ignored) {}
+            }
+            // Parse các variant (solo_insane, teams_normal...)
+            for (String variantKey : fileConfig.getConfig().getConfigurationSection(phaseKey).getKeys(false)) {
+                if (variantKey.equalsIgnoreCase("inherit")) continue;
 
-                    typeMap.put(ArenaSetupStage.valueOf(chestType.toUpperCase()), chestItemList);
+                ArenaVariant variant;
+                try {
+                    variant = ArenaVariant.valueOf(variantKey.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    continue;
                 }
 
-                phaseMap.put(variant, typeMap);
+                Map<ArenaSetupStage, List<ChestItem>> typeMap = variantMap.getOrDefault(variant, new HashMap<>());
+
+                for (String chestType : fileConfig.getConfig().getConfigurationSection(phaseKey + "." + variantKey).getKeys(false)) {
+                    ArenaSetupStage stage;
+                    try {
+                        stage = ArenaSetupStage.valueOf(chestType.toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        continue;
+                    }
+
+                    List<String> lines = fileConfig.getConfig().getStringList(phaseKey + "." + variantKey + "." + chestType);
+                    List<ChestItem> chestItemList = typeMap.getOrDefault(stage, new ArrayList<>());
+
+                    for (String line : lines) {
+                        ChestItem item = parseChestItem(line);
+                        if (item != null) chestItemList.add(item);
+                    }
+
+                    typeMap.put(stage, chestItemList);
+                }
+
+                variantMap.put(variant, typeMap);
             }
 
-            chestItems.put(state, phaseMap);
+            chestItems.put(state, variantMap);
+        }
+    }
+        @SuppressWarnings("unchecked")
+        private static ChestItem parseChestItem(String line) {
+        try {
+            // tách chance
+            String[] parts = line.split("\\|", 2);
+            double chance = Double.parseDouble(parts[0].trim());
+            String def = parts[1].trim();
+
+            // tách item và meta
+            String[] baseAndMeta = def.split(";", 2);
+            String base = baseAndMeta[0]; // "WOOL:14"
+            String meta = baseAndMeta.length > 1 ? baseAndMeta[1] : "";
+
+            String[] itemSplit = base.split(":");
+            String material = itemSplit[0].trim();
+            byte data = itemSplit.length > 1 ? (byte) Integer.parseInt(itemSplit[1].trim()) : 0;
+
+            int amount = 1;
+            String name = null;
+            List<String> lore = null;
+            Map<Enchantment, Integer> enchants = new HashMap<>();
+            List<ItemFlag> flags = new ArrayList<>();
+
+            if (!meta.isEmpty()) {
+                String[] options = meta.split(",");
+                for (String opt : options) {
+                    opt = opt.trim();
+                    if (opt.startsWith("amount=")) {
+                        amount = Integer.parseInt(opt.substring(7));
+                    } else if (opt.startsWith("name=")) {
+                        name = opt.substring(5).replace("\"", "");
+                    } else if (opt.startsWith("lore=")) {
+                        String raw = opt.substring(5).trim();
+                        raw = raw.replaceAll("[{}\"]", "");
+                        lore = Arrays.asList(raw.split(","));
+                    } else if (opt.startsWith("enchant=")) {
+                        String raw = opt.substring(8).replaceAll("[{}]", "");
+                        for (String e : raw.split(",")) {
+                            String[] kv = e.split(":");
+                            if (kv.length != 2) continue;
+                            Enchantment ench = Enchantment.getByName(kv[0].trim().toUpperCase());
+                            int lvl = Integer.parseInt(kv[1].trim());
+                            if (ench != null) enchants.put(ench, lvl);
+                        }
+                    } else if (opt.startsWith("flag=")) {
+                        String raw = opt.substring(5).replaceAll("[{}]", "");
+                        for (String f : raw.split(",")) {
+                            try {
+                                flags.add(ItemFlag.valueOf(f.trim().toUpperCase()));
+                            } catch (IllegalArgumentException ignored) {}
+                        }
+                    }
+                }
+            }
+
+            ItemStack itemStack = ChestItem.buildItem(material, data, amount, name, lore, enchants, flags);
+            return new ChestItem(itemStack, chance);
+        } catch (Exception e) {
+            Bukkit.getLogger().warning("[Refill] Failed to parse item line: " + line);
+            return null;
         }
     }
 
-    public static List<ChestItem> getChestItems(ArenaState state, ArenaVariant.Type variant, ArenaSetupStage chestType) {
+    public static List<ChestItem> getChestItems(ArenaState state, ArenaVariant variant, ArenaSetupStage chestType) {
         if (!chestItems.containsKey(state)) return Collections.emptyList();
-        Map<ArenaVariant.Type, Map<ArenaSetupStage, List<ChestItem>>> phaseMap = chestItems.get(state);
+        Map<ArenaVariant, Map<ArenaSetupStage, List<ChestItem>>> phaseMap = chestItems.get(state);
         if (!phaseMap.containsKey(variant)) return Collections.emptyList();
         Map<ArenaSetupStage, List<ChestItem>> typeMap = phaseMap.get(variant);
         return typeMap.getOrDefault(chestType, Collections.emptyList());

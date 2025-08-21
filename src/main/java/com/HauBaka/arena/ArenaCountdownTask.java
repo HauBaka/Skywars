@@ -29,7 +29,7 @@ public class ArenaCountdownTask {
 
         arena.broadcast(message.replace ("%time%", "§a" + arena.getTime()));
 
-        doTimerLoop(o -> {
+        doTimerLoop(() -> {
             int time = arena.getTime();
             if (time == 10)  arena.broadcast(msgSeconds.replace("%time%", "§6" + time));
             else if (time <= 5 && time > 1) arena.broadcast(msgSeconds.replace("%time%", "§c" + time));
@@ -50,28 +50,24 @@ public class ArenaCountdownTask {
         updateScoreboard();
         String msg_seconds = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.cage_opening-seconds");
         String msg_second = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.cage_opening-second");
-        doTimerLoop(o-> {
+        doTimerLoop(() -> {
             int time = arena.getTime();
             if (time == 10)  arena.broadcast(msg_seconds.replace("%time%", "§6" + time));
-            else if (time < 5 && time > 1)  arena.broadcast(msg_seconds.replace("%time%", "§c" + time));
+            else if (time <= 5 && time > 1)  arena.broadcast(msg_seconds.replace("%time%", "§c" + time));
             else if (time == 1) arena.broadcast(msg_second.replace("%time%", "§c" + time));
         });
     }
 
-    public void doTimerLoop(Consumer<Object> consumer) {
-        cancelTask();
+    public void doTimerLoop(Runnable runnable) {
         taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skywars.getInstance(),
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        int time = arena.getTime();
-                        updateTimerScoreboard();
-                        updateChests();
-                        consumer.accept(null);
-                        if (time == 0)
-                            arena.setState(arena.getState().getNext());
-                        countdown();
+                () -> {
+                    updateTimerScoreboard();
+                    updateChests();
+                    runnable.run();
+                    if (arena.getTime() == 0) {
+                        arena.setState(arena.getState().getNext());
                     }
+                    countdown();
                 }, 0L, 20L);
     }
     public void updateChests() {

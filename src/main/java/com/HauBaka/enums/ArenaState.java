@@ -13,7 +13,6 @@ public enum ArenaState {
     DOOM("Doom", 150, null),
     ENDING("Ending", 12, null),
     CLOSED("To Hub", 0, null);
-
     @Getter
     private ArenaState next;
     @Getter

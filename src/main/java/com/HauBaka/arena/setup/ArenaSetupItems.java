@@ -7,10 +7,7 @@ import com.HauBaka.object.InteractiveItem;
 import com.HauBaka.object.TemplateBlock;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.utils.Utils;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
@@ -49,7 +46,7 @@ public class ArenaSetupItems {
 
         event.setCancelled(true);
         Location loc = event.getClickedBlock().getLocation().add(0,1,0);
-        loc.setYaw(Utils.getAbsoluteYaw(loc.getYaw()));
+
         arenaSetup.setLobby(loc);
 
     });
@@ -64,23 +61,23 @@ public class ArenaSetupItems {
 
         event.setCancelled(true);
         Location loc = event.getClickedBlock().getLocation().add(0,1,0);
-        loc.setYaw(Utils.getAbsoluteYaw(loc.getYaw()));
+        loc.setYaw(Utils.getAbsoluteYaw(event.getPlayer().getLocation().getYaw()));
         arenaSetup.addTeam(loc);
-
     });
     public static final InteractiveItem chestStick = new InteractiveItem(
             Utils.buildItem(
                     Material.STICK,
                     "&e&lADD CHEST",
                     Arrays.asList(
-                            "&eRight click&7 to chest to",
+                            "&eLeft click&7 to chest to",
                             "&7set it as spawn's chests",
                             "",
-                            "&eLeft click&7 to remove chest"
+                            "&eRight click&7 to add nearby",
+                            "&7chests."
                     ),
                     null
             ))
-            .setInteract(Action.RIGHT_CLICK_BLOCK, event -> {
+            .setInteract(Action.LEFT_CLICK_BLOCK, event -> {
                 event.setCancelled(true);
 
                 ArenaSetup arenaSetup = ArenaSetupManager.getByEditor(GamePlayer.getGamePlayer(event.getPlayer()));
@@ -100,17 +97,33 @@ public class ArenaSetupItems {
                 if (block == null || !block.getType().equals(Material.CHEST)) return;
 
                 arenaSetup.addChest(block,ArenaSetupStage.SPAWN);
+            })
+            .setInteract(Arrays.asList(Action.RIGHT_CLICK_BLOCK, Action.RIGHT_CLICK_AIR), event -> {
+                event.setCancelled(true);
+                GamePlayer editor = GamePlayer.getGamePlayer(event.getPlayer());
+                ArenaSetup arenaSetup = ArenaSetupManager.getByEditor(editor);
+                if (arenaSetup == null) return;
+
+                if (arenaSetup.getCurrentSpawn() == 0 || arenaSetup.getCurrentSpawn() > ArenaSetup.MAX_SPAWNS) {
+                    arenaSetup.getEditor().sendMessage("&4&lERROR!&r&c No spawn provided!");
+                    return;
+                }
+                if (arenaSetup.getSpawnChests().get(arenaSetup.getCurrentSpawn()).size() == ArenaSetup.CHEST_PER_SPAWN) {
+                    arenaSetup.getEditor().sendMessage("&4&lERROR!&r&c Reached maximum chests per spawn!");
+                    return;
+                }
+                addNearbyChests(editor, arenaSetup, event.getPlayer().getLocation(), 20);
             });
     public static final InteractiveItem midChestStick = new InteractiveItem(
             Utils.buildItem(Material.BLAZE_ROD, "&6&lMID CHEST ADDER",
                     Arrays.asList(
-                            "&7Right click to chest at mid",
+                            "&7Left click to chest at mid",
                             "&7to add it to mid chest list.",
                             "",
-                            "&7Left click to remove it."
+                            "&7Break to remove it."
                     ),
                     null)
-    ).setInteract(Action.RIGHT_CLICK_BLOCK, event -> {
+    ).setInteract(Action.LEFT_CLICK_BLOCK, event -> {
         event.setCancelled(true);
 
         ArenaSetup arenaSetup = ArenaSetupManager.getByEditor(GamePlayer.getGamePlayer(event.getPlayer()));
@@ -183,4 +196,23 @@ public class ArenaSetupItems {
 
                         arenaSetup.save();
                     });
+
+    public static void addNearbyChests(GamePlayer gamePlayer, ArenaSetup arenaSetup, Location loc, int radius) {
+        gamePlayer.sendMessage("executed");
+        World world = loc.getWorld();
+        int baseX = loc.getBlockX();
+        int baseY = loc.getBlockY();
+        int baseZ = loc.getBlockZ();
+        for (int x = -radius; x <= radius; x++) {
+            for (int y = -radius; y <= radius; y++) {
+                for (int z = -radius; z <= radius; z++) {
+                    Block block = world.getBlockAt(baseX + x, baseY + y, baseZ + z);
+                    if (block == null || !block.getType().equals(Material.CHEST)) continue;
+                    arenaSetup.addChest(block, ArenaSetupStage.SPAWN);
+                    gamePlayer.getPlayer().playSound(loc,Sound.ORB_PICKUP,1f,1f);
+                }
+            }
+        }
+    }
+
 }

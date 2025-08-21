@@ -11,6 +11,7 @@ public class chestHandle implements Listener {
     public void open(ChestOpenEvent event) {
         ArenaChest chest = event.getArenaChest();
         chest.setOpened(chest.getChest() != null);
+        System.out.println(chest.getLocation().toString());
     }
 
     @EventHandler

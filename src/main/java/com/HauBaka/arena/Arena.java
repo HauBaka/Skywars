@@ -137,7 +137,9 @@ public class Arena implements Listener {
         player.setFlying(true);
 
         SpectatorItems.teleportCompass(gamePlayer,this,0);
-
+        SpectatorItems.settings(gamePlayer,this,4);
+        SpectatorItems.playAgain(gamePlayer,this,7);
+        SpectatorItems.returnToLobby(gamePlayer,this,8);
         spectators.add(gamePlayer);
         return true;
     }
@@ -156,7 +158,8 @@ public class Arena implements Listener {
     public void setState(ArenaState state) {
         ArenaState oldState = this.state;
         this.state = state;
-        setTime(getState().getTime());
+        countDownTask.cancelTask();
+        setTime(state.getTime());
         Bukkit.getPluginManager().callEvent(new ArenaStageChangeEvent(this, oldState, state));
     }
     public void refill() {

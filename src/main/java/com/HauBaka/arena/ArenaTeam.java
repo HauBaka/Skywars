@@ -19,9 +19,9 @@ public class ArenaTeam {
     @Getter
     private final  List<GamePlayer> members;
     @Getter
-    private final String name;
+    private final char name;
     private final Arena arena;
-    ArenaTeam(Arena arena, Location spawn, String name) {
+    ArenaTeam(Arena arena, Location spawn, char name) {
         this.arena = arena;
         this.spawnLocation = spawn;
         this.name = name;
