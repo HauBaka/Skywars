@@ -45,6 +45,7 @@ public class Hologram {
         ArmorStand as = armorStands.get(index);
         if (as != null && !as.isDead()) {
             as.setCustomName(ChatColor.translateAlternateColorCodes('&', text));
+            as.setCustomNameVisible(!text.isEmpty());
         }
     }
 
@@ -54,24 +55,19 @@ public class Hologram {
     }
 
     private void spawnLine(Location loc, String text) {
-        if (text.isEmpty()) {
-            armorStands.add(null);
-            return;
-        }
-        ArmorStand as = loc.getWorld().spawn(loc, ArmorStand.class);
+        ArmorStand as = loc.getWorld().spawn (loc, ArmorStand.class);
+
         as.setVisible(false);
         as.setGravity(false);
-        as.setCustomNameVisible(true);
+        as.setCustomNameVisible(!text.isEmpty());
         as.setMarker(true);
         as.setCustomName(text);
-
         // NMS: set Invulnerable
         EntityArmorStand nmsAS = ((CraftArmorStand) as).getHandle();
         NBTTagCompound tag = new NBTTagCompound();
         nmsAS.c(tag);
         tag.setBoolean("Invulnerable", true);
         nmsAS.f(tag);
-
         armorStands.add(as);
     }
 

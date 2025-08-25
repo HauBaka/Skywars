@@ -11,10 +11,12 @@ import com.HauBaka.arena.Arena;
 import com.HauBaka.enums.ArenaState;
 import com.HauBaka.enums.ArenaVariant;
 import com.HauBaka.file.FileConfig;
+import io.netty.util.internal.ThreadLocalRandom;
 import lombok.Getter;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Blocks;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
@@ -29,12 +31,13 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
 
 public class ArenaChest implements Listener {
-    // state(phase_1,2...) -> type(normal/insane) -> chestType(spawn/mid) -> list item
-    private static Map<ArenaState, Map<ArenaVariant, Map<ArenaSetupStage, List<ChestItem>>>> chestItems;
+    //variant(solo/doubles ... normal/insane) -> state(phase_1,2...)  -> chestType(spawn/mid) -> list item
+    private static Map<ArenaVariant, Map<ArenaState, Map<ArenaSetupStage, List<ChestItem>>>> chestItems;
 
     private final Arena arena;
     @Getter
@@ -79,12 +82,11 @@ public class ArenaChest implements Listener {
         List<Integer> availableSlots = getAvailableSlots();
         if (availableSlots.isEmpty()) return;
 
-        List<ChestItem> itemList = new ArrayList<>(
-                ArenaChest.getChestItems(arena.getState(), arena.getVariant(), type)
-        );
+        List<ChestItem> itemList = new ArrayList<>(ArenaChest.getChestItems(arena.getVariant(), arena.getState(), type));
         if (itemList.isEmpty()) return;
 
-        List<ItemStack> itemsToAdd = pickRandomItems(itemList, Utils.randomInRange(2,Math.min(5, availableSlots.size())));
+        List<ItemStack> itemsToAdd = pickRandomItems(itemList, Utils.randomInRange(3,Math.min(6, availableSlots.size())));
+
         for (ItemStack item : itemsToAdd) {
             int slot = availableSlots.get(Utils.randomInRange(0,availableSlots.size()-1));
             bChest.getInventory().setItem(slot, item);
@@ -104,141 +106,173 @@ public class ArenaChest implements Listener {
         FileConfig fileConfig = new FileConfig("refill.yml");
         fileConfig.saveDefaultConfig();
 
-        for (String phaseKey : fileConfig.getConfig().getKeys(false)) {
-            // Phase -> ArenaState
-            ArenaState state;
+        for (String variantKey : fileConfig.getConfig().getKeys(false)) {
+
+            ArenaVariant variant;
             try {
-                state = ArenaState.valueOf(phaseKey.toUpperCase()); // solo_insane_phase1 -> SOLO_INSANE_PHASE1
+                variant = ArenaVariant.valueOf(variantKey);
             } catch (IllegalArgumentException e) {
                 continue;
             }
 
-            Map<ArenaVariant, Map<ArenaSetupStage, List<ChestItem>>> variantMap = new HashMap<>();
-
-            String inheritKey = fileConfig.getConfig().getString(phaseKey + ".inherit", null);
-            if (inheritKey != null && fileConfig.getConfig().contains(inheritKey)) {
-                ArenaState parentState;
+            Map<ArenaState, Map<ArenaSetupStage, List<ChestItem>>> stageMap = new HashMap<>();
+            for (String phaseKey : fileConfig.getConfig().getConfigurationSection(variantKey).getKeys(false)) {
+                ArenaState stage;
                 try {
-                    parentState = ArenaState.valueOf(inheritKey.toUpperCase());
-                    if (chestItems.containsKey(parentState)) {
-                        // clone sâu map của parent
-                        Map<ArenaVariant, Map<ArenaSetupStage, List<ChestItem>>> parentMap = chestItems.get(parentState);
-                        for (Map.Entry<ArenaVariant, Map<ArenaSetupStage, List<ChestItem>>> e : parentMap.entrySet()) {
-                            Map<ArenaSetupStage, List<ChestItem>> copyType = new HashMap<>();
-                            for (Map.Entry<ArenaSetupStage, List<ChestItem>> e2 : e.getValue().entrySet()) {
-                                copyType.put(e2.getKey(), new ArrayList<>(e2.getValue()));
-                            }
-                            variantMap.put(e.getKey(), copyType);
-                        }
-                    }
-                } catch (IllegalArgumentException ignored) {}
-            }
-            // Parse các variant (solo_insane, teams_normal...)
-            for (String variantKey : fileConfig.getConfig().getConfigurationSection(phaseKey).getKeys(false)) {
-                if (variantKey.equalsIgnoreCase("inherit")) continue;
-
-                ArenaVariant variant;
-                try {
-                    variant = ArenaVariant.valueOf(variantKey.toUpperCase());
+                    stage = ArenaState.valueOf(phaseKey);
                 } catch (IllegalArgumentException e) {
                     continue;
                 }
+                Map<ArenaSetupStage, List<ChestItem>> setupStageItems = new HashMap<>();
 
-                Map<ArenaSetupStage, List<ChestItem>> typeMap = variantMap.getOrDefault(variant, new HashMap<>());
+                for (String setupStage : fileConfig.getConfig().getConfigurationSection(variantKey + "." + phaseKey).getKeys(false)) {
+                    ArenaSetupStage arenaSetupStage;
 
-                for (String chestType : fileConfig.getConfig().getConfigurationSection(phaseKey + "." + variantKey).getKeys(false)) {
-                    ArenaSetupStage stage;
                     try {
-                        stage = ArenaSetupStage.valueOf(chestType.toUpperCase());
+                        arenaSetupStage = ArenaSetupStage.valueOf(setupStage);
                     } catch (IllegalArgumentException e) {
                         continue;
                     }
 
-                    List<String> lines = fileConfig.getConfig().getStringList(phaseKey + "." + variantKey + "." + chestType);
-                    List<ChestItem> chestItemList = typeMap.getOrDefault(stage, new ArrayList<>());
+                    List<String> lines = fileConfig.getConfig().getStringList(variantKey + "." + phaseKey + "." + setupStage);
+                    if (lines == null || lines.isEmpty()) continue;
+                    List<ChestItem> items = new ArrayList<>();
 
                     for (String line : lines) {
-                        ChestItem item = parseChestItem(line);
-                        if (item != null) chestItemList.add(item);
+                        ChestItem chestItem = parseChestItem(line);
+                        if (chestItem != null) items.add(chestItem);
                     }
-
-                    typeMap.put(stage, chestItemList);
+                    setupStageItems.put(arenaSetupStage, items);
                 }
 
-                variantMap.put(variant, typeMap);
+                stageMap.put(stage, setupStageItems);
             }
 
-            chestItems.put(state, variantMap);
+            chestItems.put(variant, stageMap);
         }
     }
-        @SuppressWarnings("unchecked")
-        private static ChestItem parseChestItem(String line) {
+    @SuppressWarnings("unchecked")
+    private static ChestItem parseChestItem(String line) {
         try {
-            // tách chance
-            String[] parts = line.split("\\|", 2);
-            double chance = Double.parseDouble(parts[0].trim());
-            String def = parts[1].trim();
+            if (line == null) return null;
 
-            // tách item và meta
-            String[] baseAndMeta = def.split(";", 2);
-            String base = baseAndMeta[0]; // "WOOL:14"
-            String meta = baseAndMeta.length > 1 ? baseAndMeta[1] : "";
+            String[] splitByChance = line.split("\\|", 2);
+            if (splitByChance.length < 2) throw new IllegalArgumentException("Invalid chest line (no '|'): " + line);
 
-            String[] itemSplit = base.split(":");
-            String material = itemSplit[0].trim();
-            byte data = itemSplit.length > 1 ? (byte) Integer.parseInt(itemSplit[1].trim()) : 0;
+            String chancePart = splitByChance[0].trim();
+            int chance = Integer.parseInt(chancePart);
 
-            int amount = 1;
-            String name = null;
-            List<String> lore = null;
-            Map<Enchantment, Integer> enchants = new HashMap<>();
-            List<ItemFlag> flags = new ArrayList<>();
+            String right = splitByChance[1].trim();
+            String[] tokens = right.split(";");
+            if (tokens.length == 0) throw new IllegalArgumentException("No material token: " + line);
 
-            if (!meta.isEmpty()) {
-                String[] options = meta.split(",");
-                for (String opt : options) {
-                    opt = opt.trim();
-                    if (opt.startsWith("amount=")) {
-                        amount = Integer.parseInt(opt.substring(7));
-                    } else if (opt.startsWith("name=")) {
-                        name = opt.substring(5).replace("\"", "");
-                    } else if (opt.startsWith("lore=")) {
-                        String raw = opt.substring(5).trim();
-                        raw = raw.replaceAll("[{}\"]", "");
-                        lore = Arrays.asList(raw.split(","));
-                    } else if (opt.startsWith("enchant=")) {
-                        String raw = opt.substring(8).replaceAll("[{}]", "");
-                        for (String e : raw.split(",")) {
-                            String[] kv = e.split(":");
-                            if (kv.length != 2) continue;
-                            Enchantment ench = Enchantment.getByName(kv[0].trim().toUpperCase());
-                            int lvl = Integer.parseInt(kv[1].trim());
-                            if (ench != null) enchants.put(ench, lvl);
-                        }
-                    } else if (opt.startsWith("flag=")) {
-                        String raw = opt.substring(5).replaceAll("[{}]", "");
-                        for (String f : raw.split(",")) {
-                            try {
-                                flags.add(ItemFlag.valueOf(f.trim().toUpperCase()));
-                            } catch (IllegalArgumentException ignored) {}
-                        }
-                    }
-                }
+            String materialToken = tokens[0].trim();
+            String[] materialData = materialToken.split(":", 2);
+            String matName = materialData[0].trim().toUpperCase();
+            Material material = Material.getMaterial(matName);
+            if (material == null) {
+                Bukkit.getLogger().warning("[Refill] Unknown material '" + matName + "' in line: " + line);
+                return null;
+            }
+            short durability = 0;
+            if (materialData.length > 1) {
+                try {
+                    durability = Short.parseShort(materialData[1].trim());
+                } catch (NumberFormatException ignored) {}
             }
 
-            ItemStack itemStack = ChestItem.buildItem(material, data, amount, name, lore, enchants, flags);
-            return new ChestItem(itemStack, chance);
+            int amount = 1;
+            ItemStack item = new ItemStack(material, 1, durability);
+            ItemMeta meta = item.getItemMeta();
+
+            for (int i = 1; i < tokens.length; i++) {
+                String token = tokens[i].trim();
+                if (token.isEmpty()) continue;
+
+                // key:value hoặc key=value (chỉ split 1 lần)
+                int sepIndex = token.indexOf(':');
+                String key;
+                String value;
+                if (sepIndex > 0) {
+                    key = token.substring(0, sepIndex).trim().toLowerCase();
+                    value = token.substring(sepIndex + 1).trim();
+                } else {
+                    key = token.trim().toLowerCase();
+                    value = "";
+                }
+
+                switch (key) {
+                    case "name":
+                        if (meta != null && !value.isEmpty()) {
+                            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', value));
+                        }
+                        break;
+
+                    case "amount":
+                        try {
+                            amount = Integer.parseInt(value);
+                        } catch (NumberFormatException ignored) {  }
+                        break;
+
+                    case "lore":
+                        if (meta != null && !value.isEmpty()) {
+                            String[] loreParts = value.split(",");
+                            List<String> lore = new ArrayList<>();
+                            for (String l : loreParts) lore.add(ChatColor.translateAlternateColorCodes('&', l.trim()));
+                            meta.setLore(lore);
+                        }
+                        break;
+                    case "enchant":
+                        if (meta != null && !value.isEmpty()) {
+                            String[] enchSpecs = value.split(",");
+                            for (String spec : enchSpecs) {
+                                String[] parts = spec.split(":", 2);
+                                if (parts.length < 2) continue;
+                                String enchName = parts[0].trim().toUpperCase();
+                                String lvlStr = parts[1].trim();
+                                try {
+                                    int lvl = Integer.parseInt(lvlStr);
+                                    Enchantment ench = Enchantment.getByName(enchName);
+                                    if (ench == null) {
+                                        try { ench = Enchantment.getByName(enchName.replace(' ', '_')); } catch (Exception ignore) {}
+                                    }
+                                    if (ench != null) meta.addEnchant(ench, lvl, true);
+                                } catch (NumberFormatException ignored) { }
+                            }
+                        }
+                        break;
+                    case "flag":
+                        if (meta != null && !value.isEmpty()) {
+                            String[] flags = value.split(",");
+                            for (String f : flags) {
+                                try {
+                                    meta.addItemFlags(ItemFlag.valueOf(f.trim().toUpperCase()));
+                                } catch (IllegalArgumentException ignored) { }
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            item.setAmount(amount);
+            if (meta != null) item.setItemMeta(meta);
+
+            return new ChestItem(item, chance);
         } catch (Exception e) {
-            Bukkit.getLogger().warning("[Refill] Failed to parse item line: " + line);
+            Bukkit.getLogger().warning("[Refill] Failed to parse item line: " + line + " (" + e.getMessage() + ")");
             return null;
         }
     }
 
-    public static List<ChestItem> getChestItems(ArenaState state, ArenaVariant variant, ArenaSetupStage chestType) {
-        if (!chestItems.containsKey(state)) return Collections.emptyList();
-        Map<ArenaVariant, Map<ArenaSetupStage, List<ChestItem>>> phaseMap = chestItems.get(state);
-        if (!phaseMap.containsKey(variant)) return Collections.emptyList();
-        Map<ArenaSetupStage, List<ChestItem>> typeMap = phaseMap.get(variant);
+
+    public static List<ChestItem> getChestItems(ArenaVariant variant, ArenaState state, ArenaSetupStage chestType) {
+        if (!chestItems.containsKey(variant)) return Collections.emptyList();
+
+        Map<ArenaState, Map<ArenaSetupStage, List<ChestItem>>> phaseMap = chestItems.get(variant);
+        if (!phaseMap.containsKey(state)) return Collections.emptyList();
+
+        Map<ArenaSetupStage, List<ChestItem>> typeMap = phaseMap.get(state);
         return typeMap.getOrDefault(chestType, Collections.emptyList());
     }
     public void setOpened(boolean value) {
@@ -264,28 +298,44 @@ public class ArenaChest implements Listener {
     }
     private List<ItemStack> pickRandomItems(List<ChestItem> itemList, int amount) {
         List<ItemStack> result = new ArrayList<>();
-        Random random = new Random();
+        if (itemList == null || itemList.isEmpty() || amount <= 0) return result;
 
-        for (int i = 0; i < amount; i++) {
-            double totalChance = itemList.stream().mapToDouble(ChestItem::getChance).sum();
-            Iterator<ChestItem> iterator = itemList.iterator();
-            double r = random.nextDouble() * totalChance;
-            double cumulative = 0;
+        List<ChestItem> pool = new ArrayList<>(itemList);
+        int size = Math.min(pool.size(), amount);
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
 
-            while (iterator.hasNext()) {
-                ChestItem item = iterator.next();
-                cumulative += item.getChance();
-                if (cumulative >= r) {
-                    result.add(item.getItem().clone());
-                    iterator.remove();
-                    break;
-                }
+        int attempts = 0;
+        int maxAttempts = Math.max(500, size * 50);
+
+        while (result.size() < size && attempts < maxAttempts && !pool.isEmpty()) {
+            attempts++;
+            int index = rnd.nextInt(pool.size());
+            ChestItem ci = pool.get(index);
+            if (ci == null) {
+                pool.remove(index);
+                continue;
             }
 
+            if (Utils.chanceOf(ci.getChance())) {
+                ItemStack it = ci.getItem();
+                if (it != null) result.add(it.clone());
+                pool.remove(index);
+            } else {
+                if (attempts % 50 == 0) {
+                    ChestItem pick = pool.remove(rnd.nextInt(pool.size()));
+                    if (pick != null && pick.getItem() != null) result.add(pick.getItem().clone());
+                }
+            }
+        }
+
+        while (result.size() < size && !pool.isEmpty()) {
+            ChestItem pick = pool.remove(ThreadLocalRandom.current().nextInt(pool.size()));
+            if (pick != null && pick.getItem() != null) result.add(pick.getItem().clone());
         }
 
         return result;
     }
+
 
     public void destroy() {
         HandlerList.unregisterAll(this);

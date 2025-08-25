@@ -7,8 +7,12 @@ import com.HauBaka.command.adminCommand;
 import com.HauBaka.command.arenaSetupCommand;
 import com.HauBaka.command.skywarsCommand;
 import com.HauBaka.command.testCommand;
+import com.HauBaka.enums.ArenaSetupStage;
+import com.HauBaka.enums.ArenaState;
+import com.HauBaka.enums.ArenaVariant;
 import com.HauBaka.file.FileConfig;
 import com.HauBaka.handle.*;
+import com.HauBaka.object.ArenaChest;
 import com.HauBaka.object.cage.CageManager;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.world.WorldManager;
@@ -41,7 +45,7 @@ public class Skywars extends JavaPlugin {
         configConfig.saveDefaultConfig();
         registerCommands();
         registerEvents();
-
+        System.out.println("Size:"+ArenaChest.getChestItems(ArenaVariant.valueOf("SOLO_INSANE"), ArenaState.valueOf("PHASE_1"), ArenaSetupStage.valueOf("SPAWN")).size());
         WorldManager.disableWorldLogs();
 
     }

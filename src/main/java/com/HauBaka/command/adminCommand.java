@@ -52,7 +52,7 @@ public class adminCommand extends BaseCommand {
             return;
         }
 
-        Arena arena = ArenaManager.createArena(templateArena, new ArenaVariant(mode, type));
+        Arena arena = ArenaManager.createArena(templateArena, ArenaVariant.fromKey(mode, type));
         final int[] taskID = {0};
 
         taskID[0] = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skywars.getInstance(), new Runnable() {

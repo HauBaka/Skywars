@@ -15,9 +15,9 @@ import java.util.stream.Collectors;
 public class ChestItem {
     private final ItemStack item;
     @Getter
-    private final double chance;
+    private final int chance;
 
-    public ChestItem(ItemStack item, double chance) {
+    public ChestItem(ItemStack item, int chance) {
         this.item = item;
         this.chance = chance;
     }

@@ -98,7 +98,7 @@ public class ArenaCountdownTask {
             o = ArenaState.WAITING;
             lines = ScoreboardData.getScoreboard(o);
 
-            String value = arena.getState() == ArenaState.WAITING ? "Waiting" : "Starting in &a" + arena.getTime();
+            String value = arena.getState() == ArenaState.WAITING ? "Waiting" : "Starting in &a" + arena.getTime() + "s";
 
             var = ScoreboardVariable.STATE;
             int idx = ScoreboardData.getIndex(o, var);
