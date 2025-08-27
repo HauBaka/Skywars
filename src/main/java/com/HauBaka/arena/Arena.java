@@ -9,6 +9,7 @@ import com.HauBaka.enums.ArenaState;
 import com.HauBaka.enums.ArenaVariant;
 import com.HauBaka.event.ArenaStageChangeEvent;
 import com.HauBaka.player.GamePlayer;
+import com.HauBaka.utils.ChatUtils;
 import com.HauBaka.world.WorldManager;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,11 +24,9 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Arena implements Listener {
     @Getter
@@ -60,6 +59,8 @@ public class Arena implements Listener {
     private World world;
     @Getter
     private final List<ArenaChest> midChests;
+    @Getter
+    private final Set<ArenaChest> openedChests;
     @Getter @Setter
     private Location lobby;
     @Getter @Setter
@@ -79,6 +80,7 @@ public class Arena implements Listener {
         this.teams = new ArrayList<>();
         this.alive_teams = new ArrayList<>();
         this.midChests = new ArrayList<>();
+        this.openedChests = new HashSet<>();
         Bukkit.getPluginManager().registerEvents(this, Skywars.getInstance());
         create();
     }
@@ -128,19 +130,27 @@ public class Arena implements Listener {
         if (oldArena != null && oldArena != this) oldArena.removePlayer(gamePlayer);
 
         ArenaTeam team = getTeam(gamePlayer);
-        healPlayer(gamePlayer);
-        Player player = gamePlayer.getPlayer();
-        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 100000000, 0));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 100000000, 0));
-        player.teleport(team != null ? team.getSpawnLocation() : lobby);
-        player.setAllowFlight(true);
-        player.setFlying(true);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                healPlayer(gamePlayer);
 
-        SpectatorItems.teleportCompass(gamePlayer,this,0);
-        SpectatorItems.settings(gamePlayer,this,4);
-        SpectatorItems.playAgain(gamePlayer,this,7);
-        SpectatorItems.returnToLobby(gamePlayer,this,8);
+                Player player = gamePlayer.getPlayer();
+                player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 100000000, 0));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 100000000, 0));
+                player.teleport(team != null ? team.getSpawnLocation() : lobby);
+                player.setAllowFlight(true);
+                player.setFlying(true);
+
+                SpectatorItems.teleportCompass(gamePlayer, Arena.this,0);
+                SpectatorItems.settings(gamePlayer, Arena.this,4);
+                SpectatorItems.playAgain(gamePlayer, Arena.this,7);
+                SpectatorItems.returnToLobby(gamePlayer, Arena.this,8);
+            }
+        }.runTaskLater(Skywars.getInstance(), 5L);
+
         spectators.add(gamePlayer);
+
         return true;
     }
     public void removePlayer(GamePlayer gamePlayer) {
@@ -163,6 +173,7 @@ public class Arena implements Listener {
         Bukkit.getPluginManager().callEvent(new ArenaStageChangeEvent(this, oldState, state));
     }
     public void refill() {
+        openedChests.clear();
         for (ArenaTeam team : teams) team.refill();
         for (ArenaChest midChest : midChests) midChest.refill();
     }
@@ -205,6 +216,7 @@ public class Arena implements Listener {
     @EventHandler
     public void interactEvent(PlayerInteractEvent event) {
         if (event.getPlayer().getWorld() != world) return;
+        if (!alive_players.contains(GamePlayer.getGamePlayer(event.getPlayer()))) event.setCancelled(true);
         Bukkit.getPluginManager().callEvent(new com.HauBaka.event.PlayerInteractEvent(
                 this, GamePlayer.getGamePlayer(event.getPlayer()), event));
     }
@@ -215,8 +227,8 @@ public class Arena implements Listener {
                 !(event.getDamager() instanceof Player) ||
                 event.getEntity().getWorld() != world
         ) return;
-        GamePlayer victim = GamePlayer.get((Player) event.getEntity());
-        GamePlayer attacker = GamePlayer.get((Player) event.getDamager());
+        GamePlayer victim = GamePlayer.getGamePlayer((Player) event.getEntity());
+        GamePlayer attacker = GamePlayer.getGamePlayer((Player) event.getDamager());
         Bukkit.getPluginManager().callEvent(new PlayerDamagePlayerEvent(this, victim, attacker, event));
     }
     @EventHandler
@@ -224,8 +236,23 @@ public class Arena implements Listener {
         if (
                 event.getEntity().getWorld() != world
         ) return;
-        GamePlayer victim = GamePlayer.get((Player) event.getEntity());
-        GamePlayer attacker = GamePlayer.get((Player) event.getEntity().getKiller());
+        GamePlayer victim = GamePlayer.getGamePlayer((Player) event.getEntity());
+        GamePlayer attacker = GamePlayer.getGamePlayer((Player) event.getEntity().getKiller());
+        event.setDeathMessage(null);
+        alive_players.remove(victim);
+        addSpectator(victim);
+        ChatUtils.sendComplexMessage(
+                victim.getPlayer(),
+                ChatUtils.simple("&cYou died!&e Want to play again? "),
+                ChatUtils.command(
+                        "&b&lClick here!",
+                        "/play " + getVariant().toString(),
+                        "Click here to play another game of &bSkywars"
+                )
+        );
+        broadcast(victim.getPlayer().getDisplayName() +" died!");
+
+
         Bukkit.getPluginManager().callEvent(new PlayerDeathEvent(this, victim, attacker, event));
     }
 

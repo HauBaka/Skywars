@@ -48,13 +48,11 @@ public class GamePlayer {
         for (Player p : Bukkit.getOnlinePlayers()) getGamePlayer(p);
     }
     public static GamePlayer getGamePlayer(Player player) {
+        if (player == null) return null;
         if (gamePlayers.containsKey(player)) return gamePlayers.get(player);
         GamePlayer gamePlayer = new GamePlayer(player);
         gamePlayers.put(player, gamePlayer);
         return gamePlayer;
-    }
-    public static GamePlayer get(Player player) {
-        return gamePlayers.computeIfAbsent(player, GamePlayer::new);
     }
     public void sendMessage(String message) {
         if (player != null && player.isOnline()) {

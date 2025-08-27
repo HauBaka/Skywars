@@ -13,17 +13,7 @@ public class playerDeathHandle implements Listener {
         GamePlayer victim = event.getVictim();
         GamePlayer attacker = event.getAttacker();
         Arena arena = event.getArena();
-        event.getParentEvent().setDeathMessage(null);
-        arena.addSpectator(victim);
-        ChatUtils.sendComplexMessage(
-                victim.getPlayer(),
-                ChatUtils.simple("&cYou died!&e Want to play again? "),
-                ChatUtils.command(
-                        "&b&lClick here!",
-                        "/play " + arena.getVariant().getType().name() + "_" + arena.getVariant().getMode().name(),
-                        "Click here to play another game of &bSkywars"
-                )
-        );
-        arena.broadcast(victim.getPlayer().getDisplayName() +" died!");
+
+
     }
 }

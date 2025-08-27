@@ -7,15 +7,17 @@ import com.HauBaka.object.ArenaChest;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.utils.Utils;
 import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public class ArenaCountdownTask {
     private int taskID;
+    private BukkitTask chestHologramTask;
     private final Arena arena;
     ArenaCountdownTask(Arena arena) {
         this.arena = arena;
@@ -57,8 +59,8 @@ public class ArenaCountdownTask {
             else if (time == 1) arena.broadcast(msg_second.replace("%time%", "§c" + time));
         });
     }
-
     public void doTimerLoop(Runnable runnable) {
+        updateChestsPacket();
         taskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(Skywars.getInstance(),
                 () -> {
                     updateTimerScoreboard();
@@ -76,17 +78,20 @@ public class ArenaCountdownTask {
                 || arena.getState() == ArenaState.STARTING
                 || arena.getState() == ArenaState.CAGE_OPENING) return;
         String time = "&a" + Utils.secondsToTime(arena.getTime());
-        for (ArenaTeam team : arena.getTeams()) {
-            for (ArenaChest chest : team.getSpawnChests()) {
-                if (chest.isOpened()) {
-                    chest.getHologram().setLine(0, time);
+        for (ArenaChest chest : arena.getOpenedChests()) {
+            chest.getHologram().setLine(0, time);
+        }
+    }
+    public void updateChestsPacket() {
+        if (chestHologramTask != null) chestHologramTask.cancel();
+        chestHologramTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                for (ArenaChest chest : arena.getOpenedChests()) {
+                    chest.sendOpenPacket(true);
                 }
             }
-        }
-        for (ArenaChest chest : arena.getMidChests())
-            if (chest.isOpened()) {
-                chest.getHologram().setLine(0, time);
-            }
+        }.runTaskTimer(Skywars.getInstance(), 0L, 3L);
     }
     private void updateTimerScoreboard() {
         Object o;

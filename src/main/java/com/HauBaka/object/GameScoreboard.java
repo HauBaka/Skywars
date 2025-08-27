@@ -35,6 +35,7 @@ public class GameScoreboard {
         this.gamePlayer = gamePlayer;
         this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
         this.size = 0;
+
         String objName = ("sw-" + gamePlayer.getPlayer().getUniqueId().toString().replace("-", ""))
                 .substring(0, Math.min(16, ("sw-" + gamePlayer.getPlayer().getUniqueId()).length()));
 

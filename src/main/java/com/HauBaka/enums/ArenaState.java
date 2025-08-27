@@ -7,7 +7,7 @@ public enum ArenaState {
     WAITING("Waiting", -1, null),
     STARTING("Starting", 15, null),
     CAGE_OPENING("Start", 10, null),
-    PHASE_1("Refill", 180, null),
+    PHASE_1("Refill", 10, null),
     PHASE_2("Refill", 120, null),
     PHASE_3("Refill", 150, null),
     DOOM("Doom", 150, null),

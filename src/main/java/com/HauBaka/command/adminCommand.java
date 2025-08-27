@@ -89,7 +89,7 @@ public class adminCommand extends BaseCommand {
         }
         if (arena.getState() == ArenaState.AVAILABLE || arena.getState() == ArenaState.WAITING) {
             arena.broadcast("&eThis game has been forced to start!");
-            arena.setState(ArenaState.STARTING);
+            arena.setState(ArenaState.CAGE_OPENING);
         } else gamePlayer.sendMessage("&4&lERROR!&r&c This game started!");
 
     }

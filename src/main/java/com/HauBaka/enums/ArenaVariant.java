@@ -2,6 +2,7 @@ package com.HauBaka.enums;
 
 import com.HauBaka.utils.Utils;
 import com.sun.org.apache.xpath.internal.operations.Mod;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 
 public enum ArenaVariant {
@@ -13,23 +14,15 @@ public enum ArenaVariant {
 
     MEGA_NORMAL(Mode.MEGA, Type.NORMAL),
     MEGA_INSANE(Mode.MEGA, Type.INSANE);
-
+    @Getter
     private final Mode mode;
+    @Getter
     private final Type type;
 
     ArenaVariant(Mode mode, Type type) {
         this.mode = mode;
         this.type = type;
     }
-
-    public Mode getMode() {
-        return mode;
-    }
-
-    public Type getType() {
-        return type;
-    }
-
     public String getKey() {
         return name();
     }

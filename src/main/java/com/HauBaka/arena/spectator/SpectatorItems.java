@@ -24,7 +24,7 @@ public class SpectatorItems {
                         null
                 ),
                 () -> SpectatorGui.open(gamePlayer, arena)
-                ).getItem()
+                ).getItem().clone()
         );
     }
     public static void settings(GamePlayer gamePlayer, Arena arena, int slot) {
@@ -36,7 +36,7 @@ public class SpectatorItems {
                         null
                 ),
                 () -> SpectatorSettingsGui.open(gamePlayer)
-                ).getItem()
+                ).getItem().clone()
         );
     }
     public static void playAgain(GamePlayer gamePlayer, Arena arena, int slot) {
@@ -48,7 +48,7 @@ public class SpectatorItems {
                         null
                 ),
                 () -> SpectatorPlayAgainGui.open(gamePlayer, arena)
-                ).getItem()
+                ).getItem().clone()
         );
     }
     public static void returnToLobby(GamePlayer gamePlayer, Arena arena, int slot) {
@@ -60,7 +60,7 @@ public class SpectatorItems {
                         null
                 ),
                 () -> arena.removePlayer(gamePlayer)
-                ).getItem()
+                ).getItem().clone()
         );
     }
     private static InteractiveItem helper(ItemStack itemStack, Runnable action) {

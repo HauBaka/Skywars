@@ -16,12 +16,16 @@ import com.HauBaka.object.ArenaChest;
 import com.HauBaka.object.cage.CageManager;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.world.WorldManager;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Skywars extends JavaPlugin {
+    @Getter
+    private ProtocolManager protocolManager;
 
     @Getter
     private FileConfig messageConfig;
@@ -34,6 +38,7 @@ public class Skywars extends JavaPlugin {
     public void onEnable() {
         instance = this;
         getLogger().info("Plugin enabled!");
+        protocolManager = ProtocolLibrary.getProtocolManager();
         CageManager.init();
         WorldManager.init();
         ArenaManager.init();
@@ -45,7 +50,6 @@ public class Skywars extends JavaPlugin {
         configConfig.saveDefaultConfig();
         registerCommands();
         registerEvents();
-        System.out.println("Size:"+ArenaChest.getChestItems(ArenaVariant.valueOf("SOLO_INSANE"), ArenaState.valueOf("PHASE_1"), ArenaSetupStage.valueOf("SPAWN")).size());
         WorldManager.disableWorldLogs();
 
     }
@@ -69,7 +73,7 @@ public class Skywars extends JavaPlugin {
         PaperCommandManager manager = new PaperCommandManager(this);
 
         manager.getCommandContexts().registerContext(GamePlayer.class, c ->
-                GamePlayer.get(c.getPlayer())
+                GamePlayer.getGamePlayer(c.getPlayer())
         );
 
 

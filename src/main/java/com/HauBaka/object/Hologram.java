@@ -60,6 +60,7 @@ public class Hologram {
         as.setVisible(false);
         as.setGravity(false);
         as.setCustomNameVisible(!text.isEmpty());
+        as.setSmall(true);
         as.setMarker(true);
         as.setCustomName(text);
         // NMS: set Invulnerable

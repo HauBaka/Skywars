@@ -6,3 +6,4 @@ author: HauBaka
 website: haubaka.xyz
 depend:
   - SlimeWorldManager
+  - ProtocolLib

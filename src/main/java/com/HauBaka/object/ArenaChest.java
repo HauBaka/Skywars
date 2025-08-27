@@ -15,10 +15,7 @@ import io.netty.util.internal.ThreadLocalRandom;
 import lombok.Getter;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import net.minecraft.server.v1_8_R3.Blocks;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Chest;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.enchantments.Enchantment;
@@ -43,7 +40,7 @@ public class ArenaChest implements Listener {
     @Getter
     private final Location location;
     @Getter
-    private final Hologram hologram;
+    private Hologram hologram;
     @Getter
     private final ArenaSetupStage type;
     @Getter
@@ -53,8 +50,6 @@ public class ArenaChest implements Listener {
         this.location = location;
         this.type = type;
         this.isOpened = false;
-        this.hologram = new Hologram(location);
-        hologram.setLines("", "");
         Bukkit.getPluginManager().registerEvents(this, Skywars.getInstance());
     }
     public Chest getChest() {
@@ -92,6 +87,7 @@ public class ArenaChest implements Listener {
             bChest.getInventory().setItem(slot, item);
             availableSlots.remove((Integer) slot);
         }
+        setOpened(false);
     }
     public boolean isEmpty() {
         Chest chest = getChest();
@@ -278,23 +274,30 @@ public class ArenaChest implements Listener {
     public void setOpened(boolean value) {
         this.isOpened = value;
         if (!value) {
-            hologram.clearLines();
-            ((CraftWorld) location.getWorld()).getHandle().playBlockAction(
-                    new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ()),
-                    Blocks.CHEST,
-                    1,
-                    0
-            );
+            arena.getOpenedChests().remove(this);
+            if (hologram != null) {
+                hologram.setLine(0, "");
+                hologram.setLine(1, "");
+            }
+            if (getChest() != null)
+                sendOpenPacket(false);
         }
         else {
-            hologram.setLine(0, Utils.secondsToTime(arena.getTime()));
-            ((CraftWorld) location.getWorld()).getHandle().playBlockAction(
-                    new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ()),
-                    Blocks.CHEST,
-                    1,
-                    1
-            );
+            arena.getOpenedChests().add(this);
+            if (hologram == null)  {
+                hologram = new Hologram(location.clone().add(0,0.5,0));
+                hologram.setLines("", "");
+            }
+            hologram.setLine(0, "&a"+ Utils.secondsToTime(arena.getTime()));
+            hologram.setLine(1, isEmpty() ? "&cEmpty!" : "");
         }
+    }
+    public void sendOpenPacket(boolean open) {
+        ((CraftWorld) location.getWorld()).getHandle().playBlockAction(
+                new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ()),
+                Blocks.CHEST,
+                1, open ? 1 : 0
+        );
     }
     private List<ItemStack> pickRandomItems(List<ChestItem> itemList, int amount) {
         List<ItemStack> result = new ArrayList<>();
@@ -336,17 +339,20 @@ public class ArenaChest implements Listener {
         return result;
     }
 
-
     public void destroy() {
+        setOpened(false);
         HandlerList.unregisterAll(this);
-        hologram.destroy();
+        if (hologram != null) hologram.destroy();
     }
 
     @EventHandler
     public void openChest(PlayerInteractEvent event) {
         if (event.getClickedBlock() == null) return;
         if (event.getClickedBlock().getType() != Material.CHEST) return;
-
+        if (!arena.getAlive_players().contains(GamePlayer.getGamePlayer(event.getPlayer()))) {
+            event.setCancelled(true);
+            return;
+        }
         Chest chest = (Chest) event.getClickedBlock().getState();
         if (!chest.getLocation().equals(location)) return;
         setOpened(true);
@@ -355,7 +361,6 @@ public class ArenaChest implements Listener {
                 GamePlayer.getGamePlayer((Player) event.getPlayer()),
                 this
         ));
-
     }
 
     @EventHandler
@@ -364,6 +369,7 @@ public class ArenaChest implements Listener {
         if (event.getPlayer() == null) return;
         Chest chest = (Chest) event.getInventory().getHolder();
         if (!chest.getLocation().equals(location)) return;
+        setOpened(true);
         Bukkit.getPluginManager().callEvent(new ChestCloseEvent(
                 arena,
                 GamePlayer.getGamePlayer((Player) event.getPlayer()),
@@ -374,8 +380,7 @@ public class ArenaChest implements Listener {
     @EventHandler
     public void chestBreak(BlockBreakEvent event) {
         if (!event.getBlock().getLocation().equals(location)) return;
-        Chest chest = getChest();
-        if (chest == null) return;
+        if (hologram != null) hologram.destroy();
         setOpened(false);
         Bukkit.getPluginManager().callEvent(new ChestBreakEvent(
                 arena,
