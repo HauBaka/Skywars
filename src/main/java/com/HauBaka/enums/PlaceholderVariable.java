@@ -2,7 +2,8 @@ package com.HauBaka.enums;
 
 import lombok.Getter;
 
-public enum ScoreboardVariable {
+@Getter
+public enum PlaceholderVariable {
     DATE("%date%"),
     GAME_ID("%game_id%"),
     GAME_PLAYERS("%game_players%"),
@@ -15,12 +16,11 @@ public enum ScoreboardVariable {
     PLAYERS_LEFT("%players_left%"),
     TEAMS_LEFT("%teams_left%"),
     KILLS("%kills%"),
-    ASSISTS("%assists%");
-
-    @Getter
+    ASSISTS("%assists%"),
+    PLAYER("%player%");
     private final String placeholder;
 
-    ScoreboardVariable(String placeholder) {
+    PlaceholderVariable(String placeholder) {
         this.placeholder = placeholder;
     }
 }

@@ -2,6 +2,7 @@ package com.HauBaka.arena;
 
 import com.HauBaka.Skywars;
 import com.HauBaka.object.ArenaChest;
+import com.HauBaka.object.cage.Cage;
 import com.HauBaka.object.cage.CageManager;
 import com.HauBaka.player.GamePlayer;
 import lombok.Getter;
@@ -29,25 +30,24 @@ public class ArenaTeam {
         this.members = new ArrayList<>();
     }
 
-    //TODO: implement here!
     public boolean addPlayer(GamePlayer player) {
         if (members.contains(player) || members.size() == arena.getVariant().getMode().getPlayerPerTeam()) return false;
         player.getPlayer().teleport(
                 Skywars.getConfigConfig().getConfig().getBoolean("waiting_lobby") ?
                         arena.getLobby() : spawnLocation
         );
-        arena.getPlayers().add(player);
         members.add(player);
-        player.setArena(arena);
-        arena.broadcast(player.getPlayer().getName() + " joined the game!");
-        arena.getCountDownTask().updateScoreboard();
+        arena.getCountDownTask().updateScoreboard(player);
         return true;
     }
     public boolean removePlayer(GamePlayer player) {
         if (!members.contains(player)) return false;
+
         members.remove(player);
+        arena.getPlayers().remove(player);
+
         player.setArena(null);
-        //TODO: implement here!
+
         return true;
     }
     public int size() {
@@ -62,7 +62,7 @@ public class ArenaTeam {
 
     public void joinCage() {
         if (members.isEmpty()) return;
-        members.get(0).getSelectedCage().place(spawnLocation.clone().add(0,-1,0));
+        members.get(0).getPlayerData().getSelectedCage().place(spawnLocation.clone().add(0,-1,0));
         for (GamePlayer member : members) {
             member.getPlayer().teleport(spawnLocation);
             member.getScoreboard().setArena(arena,this);
@@ -70,8 +70,8 @@ public class ArenaTeam {
     }
     public void removeCage() {
         Location loc = spawnLocation.clone().add(0,-1,0);
-        if (members.isEmpty()) CageManager.getCage("default").remove(loc);
-        else members.get(0).getSelectedCage().remove(loc);
+        Cage cage = members.isEmpty() ? CageManager.getCage("default") : members.get(0).getPlayerData().getSelectedCage();
+        if (cage != null) cage.remove(loc);
     }
 
 }

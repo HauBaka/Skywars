@@ -2,6 +2,7 @@ package com.HauBaka.arena;
 
 import com.HauBaka.arena.setup.ArenaSetup;
 import com.HauBaka.enums.ArenaSetupStage;
+import com.HauBaka.object.TemplateBlock;
 import com.HauBaka.utils.Utils;
 import com.HauBaka.object.ArenaChest;
 import com.HauBaka.file.FileConfig;
@@ -13,47 +14,18 @@ import java.util.List;
 import java.util.Map;
 
 public class TemplateArena {
-    public static class TemplateLocation {
-        @Getter
-        public double X, Y, Z;
-        @Getter
-        float Yaw, Pitch;
-        public TemplateLocation(double X, double Y, double Z, float Yaw, float Pitch) {
-            this.X = X;
-            this.Y = Y;
-            this.Z=  Z;
-            this.Yaw=  Yaw;
-            this.Pitch = Pitch;
-        }
-        public TemplateLocation(Location location) {
-            this.X = location.getX();
-            this.Y = location.getY();
-            this.Z = location.getZ();
-            this.Yaw = location.getYaw();
-            this.Pitch = location.getPitch();
-        }
-
-        public boolean equals(TemplateLocation other) {
-            return other != null &&
-                    other.getX() == X &&
-                    other.getY() == Y &&
-                    other.getZ() == Z &&
-                    other.getPitch() == Pitch &&
-                    other.getYaw() == Yaw;
-        }
-    }
     @Getter
     private final String mapName;
     @Getter
     private String name;
     @Getter
-    private TemplateLocation lobby;
+    private TemplateBlock lobby;
     @Getter
-    private List<TemplateLocation> spawns;
+    private List<TemplateBlock> spawns;
     @Getter
-    private List<List<TemplateLocation>> spawnChests;
+    private List<List<TemplateBlock>> spawnChests;
     @Getter
-    private List<TemplateLocation> midChests;
+    private List<TemplateBlock> midChests;
     private final FileConfig fileConfig;
     @Getter
     private boolean isValid;
@@ -72,24 +44,22 @@ public class TemplateArena {
         this.spawns = new ArrayList<>();
         this.spawnChests = new ArrayList<>();
         if (fileConfig.getConfig().contains("lobby")) {
-            lobby = new TemplateLocation(
-                    fileConfig.getConfig().getDouble("lobby.x"),
-                    fileConfig.getConfig().getDouble("lobby.y"),
-                    fileConfig.getConfig().getDouble("lobby.z"),
-                    0f, 0f
-            );
+            lobby = new TemplateBlock(
+                    fileConfig.getConfig().getInt("lobby.x"),
+                    fileConfig.getConfig().getInt("lobby.y"),
+                    fileConfig.getConfig().getInt("lobby.z"));
         }
         List<Map<?, ?>> spawnsList = fileConfig.getConfig().getMapList("spawns");
         for (Map<?, ?> spawnMap : spawnsList) {
-            TemplateLocation spawnLoc = mapToTemplateLocation(spawnMap);
+            TemplateBlock spawnLoc = mapToTemplateBlock(spawnMap);
             spawns.add(spawnLoc);
 
             // Load chests for this spawn
-            List<TemplateLocation> chestLocations = new ArrayList<>();
+            List<TemplateBlock> chestLocations = new ArrayList<>();
             List<Map<?, ?>> chestList = (List<Map<?, ?>>) spawnMap.get("chests");
             if (chestList != null) {
                 for (Map<?, ?> chestMap : chestList) {
-                    chestLocations.add(mapToTemplateLocation(chestMap));
+                    chestLocations.add(mapToTemplateBlock(chestMap));
                 }
             }
             spawnChests.add(chestLocations);
@@ -99,32 +69,35 @@ public class TemplateArena {
         this.midChests = new ArrayList<>();
         List<Map<?, ?>> midChestList = fileConfig.getConfig().getMapList("midChests");
         for (Map<?, ?> chestMap : midChestList) {
-            midChests.add(mapToTemplateLocation(chestMap));
+            midChests.add(mapToTemplateBlock(chestMap));
         }
     }
 
-    private TemplateLocation mapToTemplateLocation(Map<?, ?> map) {
-        double x = ((Number) map.get("x")).doubleValue();
-        double y = ((Number) map.get("y")).doubleValue();
-        double z = ((Number) map.get("z")).doubleValue();
+    private TemplateBlock mapToTemplateBlock(Map<?, ?> map) {
+        int x = ((Number) map.get("x")).intValue();
+        int y = ((Number) map.get("y")).intValue();
+        int z = ((Number) map.get("z")).intValue();
+
         float yaw = map.containsKey("yaw") ? ((Number) map.get("yaw")).floatValue() : 0f;
-        float pitch = map.containsKey("pitch") ? ((Number) map.get("pitch")).floatValue() : 0f;
-        return new TemplateLocation(x, y, z, yaw, pitch);
+        TemplateBlock templateBlock = new TemplateBlock(x, y, z);
+        templateBlock.setyaw(yaw);
+
+        return templateBlock;
     }
 
     public void setUp(Arena arena) {
         arena.setLobby(arena.getWorld().getBlockAt((int) lobby.getX(), (int) lobby.getY(), (int) lobby.getZ()).getLocation());
         //Add spawn and its chests.
         for (int i = 0 ; i < spawns.size(); ++i) {
-            TemplateLocation templateLocation = spawns.get(i);
+            TemplateBlock templateBlock = spawns.get(i);
             Location spawn = new Location(arena.getWorld(),
-                    templateLocation.getX(), templateLocation.getY(), templateLocation.getZ(),
-                    templateLocation.getYaw(), templateLocation.getPitch());
+                    templateBlock.getX(), templateBlock.getY(), templateBlock.getZ(),
+                    templateBlock.getDirection().getYaw(), 0f);
 
             ArenaTeam arenaTeam = new ArenaTeam(arena, spawn, (char) ('A' + i));
-            for (TemplateLocation chestTemplateLocation : spawnChests.get(i)) {
+            for (TemplateBlock chest : spawnChests.get(i)) {
                 Location chestSpawn = new Location(arena.getWorld(),
-                        chestTemplateLocation.getX(), chestTemplateLocation.getY(), chestTemplateLocation.getZ());
+                        chest.getX(), chest.getY(), chest.getZ());
                 ArenaChest arenaChest = new ArenaChest(arena, chestSpawn, ArenaSetupStage.SPAWN);
                 arenaTeam.getSpawnChests().add(arenaChest);
             }
@@ -132,9 +105,9 @@ public class TemplateArena {
             arena.getTeams().add(arenaTeam);
         }
         //Add mid-chests
-        for (TemplateLocation midTemplateLocation : midChests) {
+        for (TemplateBlock chest : midChests) {
             Location chestSpawn = new Location(arena.getWorld(),
-                    midTemplateLocation.getX(), midTemplateLocation.getY(), midTemplateLocation.getZ());
+                    chest.getX(), chest.getY(), chest.getZ());
             ArenaChest arenaChest = new ArenaChest(arena, chestSpawn, ArenaSetupStage.MID);
             arena.getMidChests().add(arenaChest);
         }
@@ -142,29 +115,22 @@ public class TemplateArena {
     public void setUp(ArenaSetup arenaSetup) {
         //Add spawn and its chests.
         if (lobby != null)
-            arenaSetup.setLobby(
-                    arenaSetup.getWorld().getBlockAt(
-                            (int) lobby.getX(),
-                            (int) lobby.getY(),
-                            (int) lobby.getZ()
-                    ).getLocation()
-            );
+            arenaSetup.setLobby(arenaSetup.getWorld().getBlockAt(lobby.getX(), lobby.getY(), lobby.getZ()).getLocation());
+
         for (int i = 0 ; i < spawns.size(); ++i) {
-            TemplateLocation templateLocation = spawns.get(i);
+            TemplateBlock spawnTemplate = spawns.get(i);
             Location spawn = new Location(arenaSetup.getWorld(),
-                    templateLocation.getX(), templateLocation.getY(), templateLocation.getZ(),
-                    templateLocation.getYaw(), templateLocation.getPitch());
+                    spawnTemplate.getX(), spawnTemplate.getY(), spawnTemplate.getZ(),
+                    spawnTemplate.getDirection().getYaw(), 0f);
             arenaSetup.addTeam(spawn);
-            for (TemplateLocation chestTemplateLocation : spawnChests.get(i)) {
-                Location chestSpawn = new Location(arenaSetup.getWorld(),
-                        chestTemplateLocation.getX(), chestTemplateLocation.getY(), chestTemplateLocation.getZ());
+            for (TemplateBlock chest : spawnChests.get(i)) {
+                Location chestSpawn = new Location(arenaSetup.getWorld(), chest.getX(), chest.getY(), chest.getZ());
                 arenaSetup.addChest(chestSpawn.getBlock(), ArenaSetupStage.SPAWN);
             }
         }
         //Add mid-chests
-        for (TemplateLocation midTemplateLocation : midChests) {
-            Location chestSpawn = new Location(arenaSetup.getWorld(),
-                    midTemplateLocation.getX(), midTemplateLocation.getY(), midTemplateLocation.getZ());
+        for (TemplateBlock chest : midChests) {
+            Location chestSpawn = new Location(arenaSetup.getWorld(), chest.getX(), chest.getY(), chest.getZ());
             arenaSetup.addChest(chestSpawn.getBlock(), ArenaSetupStage.MID);
         }
     }

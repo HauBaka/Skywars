@@ -4,15 +4,20 @@ import com.HauBaka.Skywars;
 import com.HauBaka.arena.spectator.SpectatorItems;
 import com.HauBaka.event.PlayerDamagePlayerEvent;
 import com.HauBaka.event.PlayerDeathEvent;
+import com.HauBaka.npc.NPC;
+import com.HauBaka.npc.NPCManager;
+import com.HauBaka.npc.NPCType;
 import com.HauBaka.object.ArenaChest;
 import com.HauBaka.enums.ArenaState;
 import com.HauBaka.enums.ArenaVariant;
 import com.HauBaka.event.ArenaStageChangeEvent;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.utils.ChatUtils;
+import com.HauBaka.utils.PlaceholderUtils;
 import com.HauBaka.world.WorldManager;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.server.v1_8_R3.PacketPlayInClientCommand;
 import org.bukkit.*;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
@@ -22,9 +27,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.Team;
 
 import java.util.*;
 
@@ -95,6 +102,14 @@ public class Arena implements Listener {
     public boolean addPlayer(GamePlayer gamePlayer) {
         gamePlayer.sendMessage("");
         gamePlayer.sendMessage("&6&lINFO&r&e Sending you to &a" + world.getName() +"&e...");
+        Arena oldArena = gamePlayer.getArena();
+        if (oldArena != null) {
+            if (oldArena == this) {
+                gamePlayer.sendMessage("&4&lERROR!&r&c You had already been in this game!");
+                return false;
+            }
+            else oldArena.removePlayer(gamePlayer);
+        }
         if (state == ArenaState.AVAILABLE || state == ArenaState.WAITING || state == ArenaState.STARTING) {
             if (players.size() == variant.getMode().getMaxPlayer()) {
                 gamePlayer.sendMessage("&4&lERROR!&r&c This game reached max players!");
@@ -106,7 +121,17 @@ public class Arena implements Listener {
             }
             for (ArenaTeam team : teams) {
                 if (team.addPlayer(gamePlayer)) {
+                    String broadcastMessage = Skywars.getMessageConfig().getConfig().getString("player_join", "");
+                    if (!broadcastMessage.isEmpty()) broadcast(PlaceholderUtils.replacePlaceholders(broadcastMessage, this, gamePlayer));
+
+                    getPlayers().add(gamePlayer);
+                    gamePlayer.setArena(this);
                     healPlayer(gamePlayer);
+
+                    for (GamePlayer player : getPlayers()) {
+                        player.getPlayer().showPlayer(gamePlayer.getPlayer());
+                        gamePlayer.getPlayer().showPlayer(player.getPlayer());
+                    }
                     if (state == ArenaState.AVAILABLE) setState(ArenaState.WAITING);
                     if (players.size() == variant.getMode().getMinPlayer() && state == ArenaState.WAITING) {
                         setState(ArenaState.STARTING);
@@ -122,20 +147,30 @@ public class Arena implements Listener {
     }
 
     public boolean addSpectator(GamePlayer gamePlayer) {
-        if (spectators.contains(gamePlayer)) {
-            gamePlayer.sendMessage("&4&lERROR!&r&c You had already been in this game!");
-            return false;
-        }
-        Arena oldArena = gamePlayer.getArena();
-        if (oldArena != null && oldArena != this) oldArena.removePlayer(gamePlayer);
+        gamePlayer.setArena(this);
+        countDownTask.updateScoreboard(gamePlayer);
 
-        ArenaTeam team = getTeam(gamePlayer);
+        Team team = gamePlayer.getScoreboard().setSpectator();
+
+        for (GamePlayer alivePlayer : alive_players) alivePlayer.getPlayer().hidePlayer(gamePlayer.getPlayer());
+
+        for (GamePlayer spectator : spectators) {
+            gamePlayer.getPlayer().showPlayer(spectator.getPlayer());
+            spectator.getPlayer().showPlayer(gamePlayer.getPlayer());
+
+            Team spectatorTeam = spectator.getScoreboard().setSpectator();
+            spectatorTeam.addEntry(gamePlayer.getPlayer().getName());
+            team.addEntry(spectator.getPlayer().getName());
+        }
         new BukkitRunnable() {
             @Override
             public void run() {
-                healPlayer(gamePlayer);
-
                 Player player = gamePlayer.getPlayer();
+                ((CraftPlayer) player).getHandle().playerConnection.a(new PacketPlayInClientCommand(PacketPlayInClientCommand.EnumClientCommand.PERFORM_RESPAWN));
+
+                healPlayer(gamePlayer);
+                ArenaTeam team = getTeam(gamePlayer);
+
                 player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 100000000, 0));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 100000000, 0));
                 player.teleport(team != null ? team.getSpawnLocation() : lobby);
@@ -147,20 +182,21 @@ public class Arena implements Listener {
                 SpectatorItems.playAgain(gamePlayer, Arena.this,7);
                 SpectatorItems.returnToLobby(gamePlayer, Arena.this,8);
             }
-        }.runTaskLater(Skywars.getInstance(), 5L);
+        }.runTaskLater(Skywars.getInstance(), 1L);
+
 
         spectators.add(gamePlayer);
 
         return true;
     }
     public void removePlayer(GamePlayer gamePlayer) {
-        if (state == ArenaState.AVAILABLE || state == ArenaState.WAITING || state == ArenaState.STARTING) {
-            if (!players.contains(gamePlayer)) return;
-            ArenaTeam team = getTeam(gamePlayer);
-            if (team != null) {
-                team.removePlayer(gamePlayer);
-                broadcast(gamePlayer.getPlayer().getDisplayName() + " quit!");
-            }
+        if (!players.contains(gamePlayer)) return;
+        ArenaTeam team = getTeam(gamePlayer);
+        if (team != null) {
+            team.removePlayer(gamePlayer);
+
+            String message = Skywars.getMessageConfig().getConfig().getString("player_quit", "");
+            broadcast(PlaceholderUtils.replacePlaceholders(message, this, gamePlayer));
         }
         alive_players.remove(gamePlayer);
         spectators.remove(gamePlayer);
@@ -207,9 +243,23 @@ public class Arena implements Listener {
                 return team;
         return null;
     }
+
+    @EventHandler
+    public void onPickUp(PlayerPickupItemEvent event) {
+        if (event.getPlayer().getWorld() != world) return;
+        if (!alive_players.contains(GamePlayer.getGamePlayer(event.getPlayer()))) {
+            event.setCancelled(true);
+            return;
+        }
+    }
+
     @EventHandler
     public void blockBreakEvent(BlockBreakEvent event) {
         if (event.getPlayer().getWorld() != world) return;
+        if (!alive_players.contains(GamePlayer.getGamePlayer(event.getPlayer()))) {
+            event.setCancelled(true);
+            return;
+        }
         Bukkit.getPluginManager().callEvent(new com.HauBaka.event.BlockBreakEvent(
                 this, GamePlayer.getGamePlayer(event.getPlayer()), event));
     }
@@ -228,6 +278,10 @@ public class Arena implements Listener {
                 event.getEntity().getWorld() != world
         ) return;
         GamePlayer victim = GamePlayer.getGamePlayer((Player) event.getEntity());
+        if (!alive_players.contains(victim))  {
+            event.setCancelled(true);
+            return;
+        }
         GamePlayer attacker = GamePlayer.getGamePlayer((Player) event.getDamager());
         Bukkit.getPluginManager().callEvent(new PlayerDamagePlayerEvent(this, victim, attacker, event));
     }

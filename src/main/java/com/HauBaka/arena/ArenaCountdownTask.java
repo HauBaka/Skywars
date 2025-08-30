@@ -2,7 +2,7 @@ package com.HauBaka.arena;
 
 import com.HauBaka.Skywars;
 import com.HauBaka.enums.ArenaState;
-import com.HauBaka.enums.ScoreboardVariable;
+import com.HauBaka.enums.PlaceholderVariable;
 import com.HauBaka.object.ArenaChest;
 import com.HauBaka.player.GamePlayer;
 import com.HauBaka.utils.Utils;
@@ -25,9 +25,9 @@ public class ArenaCountdownTask {
     public void cancelTask() { Bukkit.getScheduler().cancelTask(taskID); }
     private void countdown() { arena.setTime(arena.getTime() - 1);}
     public void starting() {
-        String message = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.start-countdown");
-        String msgSeconds = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.countdown-seconds");
-        String msgSecond = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.countdown-second");
+        String message = Skywars.getMessageConfig().getConfig().getString("arena.start-countdown");
+        String msgSeconds = Skywars.getMessageConfig().getConfig().getString("arena.countdown-seconds");
+        String msgSecond = Skywars.getMessageConfig().getConfig().getString("arena.countdown-second");
 
         arena.broadcast(message.replace ("%time%", "§a" + arena.getTime()));
 
@@ -37,7 +37,6 @@ public class ArenaCountdownTask {
             else if (time <= 5 && time > 1) arena.broadcast(msgSeconds.replace("%time%", "§c" + time));
             else if (time == 1) arena.broadcast(msgSecond.replace("%time%", "§c" + time));
             else if (time <= 0) {
-                arena.removeLobby();
                 arena.setState(
                         Skywars.getConfigConfig().getConfig().getBoolean("waiting_lobby") ?
                                 ArenaState.CAGE_OPENING : ArenaState.PHASE_1
@@ -50,8 +49,8 @@ public class ArenaCountdownTask {
             team.joinCage();
         }
         updateScoreboard();
-        String msg_seconds = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.cage_opening-seconds");
-        String msg_second = Skywars.getInstance().getMessageConfig().getConfig().getString("arena.cage_opening-second");
+        String msg_seconds = Skywars.getMessageConfig().getConfig().getString("arena.cage_opening-seconds");
+        String msg_second = Skywars.getMessageConfig().getConfig().getString("arena.cage_opening-second");
         doTimerLoop(() -> {
             int time = arena.getTime();
             if (time == 10)  arena.broadcast(msg_seconds.replace("%time%", "§6" + time));
@@ -94,134 +93,136 @@ public class ArenaCountdownTask {
         }.runTaskTimer(Skywars.getInstance(), 0L, 3L);
     }
     private void updateTimerScoreboard() {
-        Object o;
-        List<String> lines;
-        ScoreboardVariable var;
         if (arena.getState() == ArenaState.AVAILABLE ||
                 arena.getState() == ArenaState.WAITING ||
                 arena.getState() == ArenaState.STARTING) {
-            o = ArenaState.WAITING;
-            lines = ScoreboardData.getScoreboard(o);
 
+            Object o = ArenaState.WAITING;
+            List<String> lines = ScoreboardData.getScoreboard(o);
             String value = arena.getState() == ArenaState.WAITING ? "Waiting" : "Starting in &a" + arena.getTime() + "s";
-
-            var = ScoreboardVariable.STATE;
+            PlaceholderVariable var = PlaceholderVariable.STATE;
             int idx = ScoreboardData.getIndex(o, var);
             String line = lines.get(idx).replace(var.getPlaceholder(), value);
-            idx = lines.size() - idx - 1;
-            for (GamePlayer gamePlayer : arena.getPlayers())
-                gamePlayer.getScoreboard().setLine(idx, line);
+            int displayIndex = lines.size() - idx - 1;
+
+            for (GamePlayer gp : arena.getPlayers()) {
+                gp.getScoreboard().setLine(displayIndex, line);
+            }
             return;
         }
-        o =  arena.getVariant().getMode();
 
-        lines = new ArrayList<>(ScoreboardData.getScoreboard(o));
-        int idx_timer = ScoreboardData.getIndex(o, ScoreboardVariable.TIMER);
-        int idx_next_event = ScoreboardData.getIndex(o, ScoreboardVariable.NEXT_EVENT_NAME);
+        Object mode = arena.getVariant().getMode();
+        List<String> lines = new ArrayList<>(ScoreboardData.getScoreboard(mode));
+        int idxTimer = ScoreboardData.getIndex(mode, PlaceholderVariable.TIMER);
+        int idxNext = ScoreboardData.getIndex(mode, PlaceholderVariable.NEXT_EVENT_NAME);
 
-        lines.set(idx_timer, lines.get(idx_timer).replace(ScoreboardVariable.TIMER.getPlaceholder(), Utils.secondsToTime(arena.getTime())));
-        lines.set(idx_next_event, lines.get(idx_next_event).replace(
-                ScoreboardVariable.NEXT_EVENT_NAME.getPlaceholder(),
-                arena.getState() == ArenaState.CAGE_OPENING ? arena.getState().getName() : arena.getState().getNext().getName()));
+        String timerLine = lines.get(idxTimer).replace(PlaceholderVariable.TIMER.getPlaceholder(), Utils.secondsToTime(arena.getTime()));
+        lines.set(idxTimer, timerLine);
 
-        for (GamePlayer gamePlayer : arena.getAlive_players()) {
-            gamePlayer.getScoreboard().setLine(lines.size() - idx_timer - 1, lines.get(idx_timer));
-            gamePlayer.getScoreboard().setLine(lines.size() - idx_next_event - 1, lines.get(idx_next_event));
+        String nextLine = lines.get(idxNext).replace(PlaceholderVariable.NEXT_EVENT_NAME.getPlaceholder(),
+                arena.getState() == ArenaState.CAGE_OPENING ? arena.getState().getName() : arena.getState().getNext().getName());
+        lines.set(idxNext, nextLine);
+
+        int displayTimerIdx = lines.size() - idxTimer - 1;
+        int displayNextIdx = lines.size() - idxNext - 1;
+
+        for (GamePlayer gp : arena.getAlive_players()) {
+            gp.getScoreboard().setLine(displayTimerIdx, lines.get(idxTimer));
+            gp.getScoreboard().setLine(displayNextIdx, lines.get(idxNext));
         }
-
-        for (GamePlayer gamePlayer : arena.getSpectators()) {
-            gamePlayer.getScoreboard().setLine(lines.size() - idx_timer - 1, lines.get(idx_timer));
-            gamePlayer.getScoreboard().setLine(lines.size() - idx_next_event - 1, lines.get(idx_next_event));
+        for (GamePlayer gp : arena.getSpectators()) {
+            gp.getScoreboard().setLine(displayTimerIdx, lines.get(idxTimer));
+            gp.getScoreboard().setLine(displayNextIdx, lines.get(idxNext));
         }
     }
-    public void updateScoreboard(GamePlayer gamePlayer, ScoreboardVariable variable, Object value) {
-        Object o = (arena.getState() == ArenaState.AVAILABLE ||
-                    arena.getState() == ArenaState.WAITING ||
-                    arena.getState() == ArenaState.STARTING) ?
-                ArenaState.WAITING : arena.getVariant().getMode();
-        int idx = ScoreboardData.getIndex(o, variable);
-        List<String> lines =  ScoreboardData.getScoreboard(o);
-        String line = lines.get(idx).replace(variable.getPlaceholder(), String.valueOf(value));
 
+    public void updateScoreboard(GamePlayer gamePlayer, PlaceholderVariable variable, Object value) {
+        Object o = (arena.getState() == ArenaState.AVAILABLE ||
+                arena.getState() == ArenaState.WAITING ||
+                arena.getState() == ArenaState.STARTING) ?
+                ArenaState.WAITING : arena.getVariant().getMode();
+
+        int idx = ScoreboardData.getIndex(o, variable);
+        List<String> lines = ScoreboardData.getScoreboard(o);
+        String line = lines.get(idx).replace(variable.getPlaceholder(), String.valueOf(value));
         gamePlayer.getScoreboard().setLine(lines.size() - idx - 1, line);
     }
+
     public void updateScoreboard() {
+        for (GamePlayer p : arena.getPlayers()) updateScoreboard(p);
+        for (GamePlayer s : arena.getSpectators()) updateScoreboard(s);
+    }
+
+    public void updateScoreboard(GamePlayer gamePlayer) {
         List<String> contents;
+        Map<PlaceholderVariable, Object> data = new LinkedHashMap<>();
+        data.put(PlaceholderVariable.DATE, Utils.getTodayFormat("dd/MM/yy"));
+        data.put(PlaceholderVariable.GAME_ID, arena.getId());
+        data.put(PlaceholderVariable.MAP_COLORED_NAME, arena.getName());
+        data.put(PlaceholderVariable.MODE_COLORED_NAME, arena.getVariant().getType().toString());
 
-        Map<ScoreboardVariable, Object> data = new LinkedHashMap<>();
-        data.put(ScoreboardVariable.DATE, Utils.getTodayFormat("dd/MM/yy"));
-        data.put(ScoreboardVariable.GAME_ID, arena.getId());
-        data.put(ScoreboardVariable.MAP_COLORED_NAME, arena.getName());
-        data.put(ScoreboardVariable.MODE_COLORED_NAME, arena.getVariant().getType().toString());
+        boolean preGame = arena.getState() == ArenaState.AVAILABLE
+                || arena.getState() == ArenaState.WAITING
+                || arena.getState() == ArenaState.STARTING;
 
-        if (arena.getState() == ArenaState.AVAILABLE || arena.getState() == ArenaState.WAITING || arena.getState() == ArenaState.STARTING) {
+        if (preGame) {
             contents = new ArrayList<>(ScoreboardData.getScoreboard(ArenaState.WAITING));
-
-            data.put(ScoreboardVariable.GAME_PLAYERS, arena.getPlayers().size());
-            data.put(ScoreboardVariable.GAME_MAX_PLAYERS, arena.getVariant().getMode().getMaxPlayer());
+            data.put(PlaceholderVariable.GAME_PLAYERS, arena.getPlayers().size());
+            data.put(PlaceholderVariable.GAME_MAX_PLAYERS, arena.getVariant().getMode().getMaxPlayer());
             int time = arena.getTime();
-            data.put(ScoreboardVariable.STATE, (arena.getState() == ArenaState.AVAILABLE || arena.getState() == ArenaState.WAITING) ?
-                    "Waiting..." : "Starting in &a" + time +"s"
+            data.put(PlaceholderVariable.STATE,
+                    (arena.getState() == ArenaState.AVAILABLE || arena.getState() == ArenaState.WAITING) ?
+                            "Waiting..." : "Starting in &a" + time + "s"
             );
-            for (ScoreboardVariable var : data.keySet()) {
-                int idx = ScoreboardData.getIndex(ArenaState.WAITING,var);
-                contents.set(idx, contents.get(idx).replace(var.getPlaceholder(),String.valueOf(data.get(var))));
-            }
-            for (GamePlayer gamePlayer : arena.getPlayers()) {
-                gamePlayer.getScoreboard().setContents(contents);
-            }
+
+            applyDataToContents(contents, ArenaState.WAITING, data);
+            gamePlayer.getScoreboard().setContents(contents);
             return;
         }
-        contents = new ArrayList<>(ScoreboardData.getScoreboard(arena.getVariant().getMode()));
 
-        data.put(ScoreboardVariable.NEXT_EVENT_NAME, arena.getState().getNext().getName());
-        data.put(ScoreboardVariable.TIMER, Utils.secondsToTime(arena.getTime()));
-        data.put(ScoreboardVariable.PLAYERS_LEFT, arena.getAlive_players().size());
-        data.put(ScoreboardVariable.TEAMS_LEFT, arena.getAlive_teams().size());
+        Object mode = arena.getVariant().getMode();
+        contents = new ArrayList<>(ScoreboardData.getScoreboard(mode));
+        data.put(PlaceholderVariable.NEXT_EVENT_NAME, arena.getState().getNext().getName());
+        data.put(PlaceholderVariable.TIMER, Utils.secondsToTime(arena.getTime()));
+        data.put(PlaceholderVariable.PLAYERS_LEFT, arena.getAlive_players().size());
+        data.put(PlaceholderVariable.TEAMS_LEFT, arena.getAlive_teams().size());
+
+        applyDataToContents(contents, mode, data);
 
         int killsLine = -1, assistsLine = -1;
         for (int i = 0; i < contents.size(); ++i) {
             String line = contents.get(i);
-            if (line.contains(ScoreboardVariable.KILLS.getPlaceholder()))
-                killsLine = i;
-            if (line.contains(ScoreboardVariable.ASSISTS.getPlaceholder()))
-                assistsLine = i;
+            if (line.contains(PlaceholderVariable.KILLS.getPlaceholder())) killsLine = i;
+            if (line.contains(PlaceholderVariable.ASSISTS.getPlaceholder())) assistsLine = i;
         }
 
-        for (ScoreboardVariable var : data.keySet()) {
-            int idx = ScoreboardData.getIndex(arena.getVariant().getMode(),var);
-            contents.set(idx, contents.get(idx).replace(var.getPlaceholder(),String.valueOf(data.get(var))));
-        }
-        // Update for alive players
-        for (GamePlayer alivePlayer : arena.getAlive_players()) {
-            List<String> cpyContents = new ArrayList<>(contents);
+        List<String> cpy = new ArrayList<>(contents);
+        if (arena.getPlayers().contains(gamePlayer)) {
             if (killsLine >= 0) {
-                String line = cpyContents.get(killsLine);
-                line = line.replace(ScoreboardVariable.KILLS.getPlaceholder(),
-                        String.valueOf(arena.getKills().getOrDefault(alivePlayer, 0)));
-                cpyContents.set(killsLine, line);
+                String line = cpy.get(killsLine).replace(PlaceholderVariable.KILLS.getPlaceholder(),
+                        String.valueOf(arena.getKills().getOrDefault(gamePlayer, 0)));
+                cpy.set(killsLine, line);
             }
             if (assistsLine >= 0) {
-                String line = cpyContents.get(assistsLine);
-                line = line.replace(ScoreboardVariable.ASSISTS.getPlaceholder(),
-                        String.valueOf(arena.getAssists().getOrDefault(alivePlayer, 0)));
-                cpyContents.set(assistsLine, line);
+                String line = cpy.get(assistsLine).replace(PlaceholderVariable.ASSISTS.getPlaceholder(),
+                        String.valueOf(arena.getAssists().getOrDefault(gamePlayer, 0)));
+                cpy.set(assistsLine, line);
             }
-            alivePlayer.getScoreboard().setContents(cpyContents);
+        } else {
+            if (killsLine >= 0) cpy.set(killsLine,  "Spectating...");
+            if (assistsLine >= 0) cpy.remove(assistsLine);
         }
+        gamePlayer.getScoreboard().setContents(cpy);
+    }
 
-        // Update for spectators
-        for (GamePlayer specPlayer : arena.getSpectators()) {
-            List<String> cpyContents = new ArrayList<>(contents);
-            if (killsLine >= 0) {
-                String line = cpyContents.get(killsLine);
-                line = line.replace(ScoreboardVariable.KILLS.getPlaceholder(), "Spectating...");
-                cpyContents.set(killsLine, line);
+    private void applyDataToContents(List<String> contents, Object scoreboardKey, Map<PlaceholderVariable, Object> data) {
+        for (Map.Entry<PlaceholderVariable, Object> e : data.entrySet()) {
+            PlaceholderVariable var = e.getKey();
+            Object val = e.getValue();
+            int idx = ScoreboardData.getIndex(scoreboardKey, var);
+            if (idx >= 0 && idx < contents.size()) {
+                contents.set(idx, contents.get(idx).replace(var.getPlaceholder(), String.valueOf(val)));
             }
-            if (assistsLine >= 0) {
-                cpyContents.remove(assistsLine);
-            }
-            specPlayer.getScoreboard().setContents(cpyContents);
         }
     }
 }

@@ -8,6 +8,7 @@ import com.HauBaka.player.GamePlayer;
 import com.HauBaka.utils.Utils;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.ClickType;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Arrays;
@@ -19,7 +20,7 @@ public class SpectatorGui {
         GuiMenu guiMenu = new GuiMenu("Teleporter",size, gamePlayer);
         int slot = 0;
         for (GamePlayer alivePlayer : arena.getAlive_players()) {
-            createItem(gamePlayer, alivePlayer,arena,guiMenu, slot);
+            createItem(gamePlayer, alivePlayer,arena,guiMenu, slot++);
         }
         guiMenu.open();
     }
@@ -45,8 +46,7 @@ public class SpectatorGui {
                     cancel();
                 }
                 guiMenu.setItem(slot, new GuiItem(
-                        Utils.buildItem(
-                                GuiItem.buildHead("https://textures.minecraft.net/texture/ca9c8753780ebc39c351da8efd91bce90bd8cca7b511f93e78df75f6615c79a6"),
+                        Utils.buildItem(head.clone(),
                                 alivePlayer.getPlayer().getDisplayName(),
                                 Arrays.asList(
                                         "§7Health:§f " + alivePlayer.getPlayer().getHealth()/20.0*100 +"%",
@@ -65,4 +65,6 @@ public class SpectatorGui {
             }
         }.runTaskTimerAsynchronously(Skywars.getInstance(),0L,20L);
     }
+    private static ItemStack head = GuiItem.buildHead("https://textures.minecraft.net/texture/ca9c8753780ebc39c351da8efd91bce90bd8cca7b511f93e78df75f6615c79a6");
+
 }

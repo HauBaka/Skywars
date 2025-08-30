@@ -2,11 +2,7 @@ package com.HauBaka.object;
 
 import com.HauBaka.arena.Arena;
 import com.HauBaka.arena.ArenaTeam;
-import com.HauBaka.arena.ScoreboardData;
-import com.HauBaka.enums.ArenaState;
-import com.HauBaka.enums.ScoreboardVariable;
 import com.HauBaka.player.GamePlayer;
-import com.HauBaka.utils.Utils;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -177,8 +173,15 @@ public class GameScoreboard {
         }
         return arr;
     }
-
+    //TODO: Show players in the same lobby
     public void setArena(Arena arena, ArenaTeam myTeam) {
+        if (arena == null || myTeam == null) return;
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p != gamePlayer.getPlayer() && p.getWorld() != arena.getWorld()) {
+                p.hidePlayer(gamePlayer.getPlayer());
+                gamePlayer.getPlayer().hidePlayer(p);
+            }
+        }
         World arenaWorld = arena.getWorld();
 
         Objective healthUnder = scoreboard.getObjective("health_under");
@@ -245,22 +248,23 @@ public class GameScoreboard {
         }
 
     }
-    public void setSpectator() {
+    public Team setSpectator() {
         Arena arena = gamePlayer.getArena();
-        if (arena == null) return;
+        if (arena == null) return null;
 
         Team spectator = scoreboard.getTeam("zzz_spectator");
         if (spectator == null) {
             spectator = scoreboard.registerNewTeam("zzz_spectator");
             spectator.setPrefix("§7[SPEC] ");
         }
-        spectator.addEntry(gamePlayer.getPlayer().getName());
+        if (!spectator.hasEntry(gamePlayer.getPlayer().getName())) spectator.addEntry(gamePlayer.getPlayer().getName());
 
         Objective healthUnder = scoreboard.getObjective("health_under");
         if (healthUnder != null) healthUnder.getScoreboard().resetScores(gamePlayer.getPlayer().getName());
 
         Objective healthTab = scoreboard.getObjective("health_tablist");
         if (healthTab != null) healthTab.getScoreboard().resetScores(gamePlayer.getPlayer().getName());
+        return spectator;
     }
 
     public void addToTablist(GamePlayer gp, ArenaTeam team, boolean isMyTeam) {

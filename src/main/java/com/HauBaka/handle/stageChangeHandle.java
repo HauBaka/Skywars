@@ -25,6 +25,7 @@ public class stageChangeHandle implements Listener {
                 arena.getCountDownTask().starting();
                 break;
             case CAGE_OPENING:
+                arena.removeLobby();
                 arena.getAlive_players().addAll(arena.getPlayers());
                 arena.getAlive_teams().addAll(arena.getTeams());
                 for (GamePlayer gamePlayer : arena.getPlayers()) {

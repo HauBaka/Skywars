@@ -14,19 +14,17 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+@Getter
 public class GamePlayer {
     private static Map<Player, GamePlayer> gamePlayers;
-    @Getter
     private final Player player;
-    @Getter
     private final GameScoreboard scoreboard;
-    @Getter
-    private Cage selectedCage;
-    @Getter @Setter
+    @Setter
     private Arena arena;
+    private PlayerData playerData;
     private GamePlayer(Player player) {
         this.player = player;
-        this.selectedCage = CageManager.getCage("default");
+        this.playerData = new PlayerData(player.getUniqueId());
         this.scoreboard = new GameScoreboard(this);
         //Test
         this.scoreboard.setContents(Arrays.asList(

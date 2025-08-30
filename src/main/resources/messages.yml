@@ -12,3 +12,5 @@ arena:
   countdown-second: "&eThe game starts in %time%&e second!"
   cage_opening-seconds: "&eCages open in:&c %time%&e seconds!"
   cage_opening-second: "&eCages open in:&c %time%&e second!"
+  player_join: "%player% &ehas joined the game! (&b%game_players%&e/&b%game_max_players%&e)"
+  player_qui: "%player% &ehas quit!"

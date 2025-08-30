@@ -190,5 +190,4 @@ public class Utils {
 
         return quadrant * 90f;
     }
-
 }

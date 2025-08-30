@@ -71,12 +71,15 @@ public class Hologram {
         nmsAS.f(tag);
         armorStands.add(as);
     }
-
+    public boolean isEmpty() {
+        return armorStands.isEmpty();
+    }
     public void destroy() {
         for (ArmorStand as : armorStands) {
             if (as != null && !as.isDead()) {
                 as.remove();
             }
         }
+        armorStands.clear();
     }
 }
